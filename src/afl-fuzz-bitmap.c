@@ -29,6 +29,22 @@
   #define NAME_MAX _XOPEN_NAME_MAX
 #endif
 
+char* load_info_file(const char* path)
+{
+    FILE *f = fopen(path, "rb");
+    fseek(f, 0, SEEK_END);
+    long fsize = ftell(f);
+    fseek(f, 0, SEEK_SET);  /* same as rewind(f); */
+
+    char *string = malloc(fsize + 1);
+    fread(string, fsize, 1, f);
+    fclose(f);
+
+    string[fsize] = 0;
+
+    return string;
+}
+
 /* Write bitmap to file. The bitmap is useful mostly for the secret
    -B option, to focus a separate fuzzing session on a particular
    interesting input without rediscovering all the others. */
@@ -446,9 +462,12 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
   if (unlikely(len == 0)) { return 0; }
 
   u8  fn[PATH_MAX];
+  u8  env_fn[PATH_MAX];
   u8 *queue_fn = "";
+  u8 *env_queue_fn="";
   u8  new_bits = 0, keeping = 0, res, classified = 0;
   s32 fd;
+  s32 env_fd;
   u64 cksum = 0;
 
   /* Update path frequency. */
@@ -498,6 +517,19 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
     ck_write(fd, mem, len, queue_fn);
     close(fd);
     add_to_queue(afl, queue_fn, len, 0);
+
+    if (afl->env_fuzz_flag == 1) {
+#ifndef SIMPLE_FILES
+
+      env_queue_fn = alloc_printf(
+          "%s/info/queue/id:%06u,%s", afl->out_dir, afl->queued_items,
+          describe_op(afl, new_bits, NAME_MAX - strlen("id:000000,")));
+#else
+
+      env_queue_fn = alloc_printf("%s/info/queue/id_%06u", afl->out_dir, afl->queued_items);
+
+#endif /* ^!SIMPLE_FILES */
+    }
 
 #ifdef INTROSPECTION
     if (afl->custom_mutators_count && afl->current_custom_fuzz) {
@@ -565,6 +597,31 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
     }
 
     keeping = 1;
+
+    /*write env info*/
+    if (afl->env_fuzz_flag == 1) {
+      env_fd =
+          open(env_queue_fn, O_WRONLY | O_CREAT | O_EXCL, DEFAULT_PERMISSION);
+      if (unlikely(env_fd < 0)) {
+        PFATAL("Unable to create '%s'", env_queue_fn);
+      }
+      char **now = afl->env;
+      while (*now) {
+        ck_write(env_fd, *now, strlen(*now), env_queue_fn);
+        ck_write(env_fd, " ", 1, env_queue_fn);
+        now++;
+      }
+      if (argv_count!=0){
+        ck_write(env_fd, "\n", 1, env_queue_fn);
+        now = afl->argv;
+        while (*now) {
+          ck_write(env_fd, *now, strlen(*now), env_queue_fn);
+          ck_write(env_fd, " ", 1, env_queue_fn);
+          now++;
+        }
+      }
+      close(env_fd);
+    }
 
   }
 
@@ -664,6 +721,20 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
 #endif                                                    /* ^!SIMPLE_FILES */
 
+      if (afl->env_fuzz_flag == 1 || afl->unicorn_mode == 1) {
+#ifndef SIMPLE_FILES
+
+        snprintf(env_fn, PATH_MAX, "%s/info/hangs/id:%06llu,%s", afl->out_dir,
+                 afl->saved_hangs,
+                 describe_op(afl, 0, NAME_MAX - strlen("id:000000,")));
+#else
+
+        snprintf(env_fn, PATH_MAX, "%s/info/hangs/id_%06llu", afl->out_dir,
+                 afl->saved_hangs);
+
+#endif /* ^!SIMPLE_FILES */
+      }
+
       ++afl->saved_hangs;
 
       afl->last_hang_time = get_cur_time();
@@ -706,7 +777,19 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
                afl->saved_crashes, afl->last_kill_signal);
 
 #endif                                                    /* ^!SIMPLE_FILES */
+      if (afl->env_fuzz_flag == 1 || afl->unicorn_mode == 1) {
+#ifndef SIMPLE_FILES
 
+        snprintf(env_fn, PATH_MAX, "%s/info/crashes/id:%06llu,sig:%02u,%s",
+                 afl->out_dir, afl->saved_crashes, afl->fsrv.last_kill_signal,
+                 describe_op(afl, 0, NAME_MAX - strlen("id:000000,sig:00,")));
+#else
+
+        snprintf(env_fn, PATH_MAX, "%s/info/crashes/id_%06llu_%02u",
+                 afl->out_dir, afl->saved_crashes, afl->last_kill_signal);
+
+#endif /* ^!SIMPLE_FILES */
+      }
       ++afl->saved_crashes;
 #ifdef INTROSPECTION
       if (afl->custom_mutators_count && afl->current_custom_fuzz) {
@@ -770,6 +853,52 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
   if (unlikely(fd < 0)) { PFATAL("Unable to create '%s'", fn); }
   ck_write(fd, mem, len, fn);
   close(fd);
+
+  if(afl->unicorn_mode == 1){
+    env_fd = open(env_fn, O_WRONLY | O_CREAT | O_EXCL, DEFAULT_PERMISSION);
+    if (unlikely(env_fd < 0)) { PFATAL("Unable to create '%s'", env_fn); }
+    // char **now = afl->argv;
+    // while (*now) {
+    //   if (!strstr(*now, "@@")) {
+    //     ck_write(info_fd, *now, strlen(*now), qn);
+    //   } else {
+    //     ck_write(info_fd, fn, strlen(fn), qn);
+    //   }
+    //   ck_write(info_fd, " ", 1, qn);
+    //   now++;
+    // }
+    u8 *tmp=alloc_printf("%s/info/total_crashes/%llu.txt", afl->out_dir,afl->total_crashes);
+    char *now=load_info_file(tmp);
+    ck_write(env_fd, now, strlen(now), env_fn);
+    close(env_fd);
+  }else if(afl->env_fuzz_flag == 1){
+    env_fd = open(env_fn, O_WRONLY | O_CREAT | O_EXCL, 0600);
+    if (unlikely(env_fd < 0)) { PFATAL("Unable to create '%s'", env_fn); }
+    char **now = afl->env;
+    while (*now) {
+      if (!strstr(*now, ".cur_input")) {
+        ck_write(env_fd, *now, strlen(*now), env_fn);
+      } else {
+        ck_write(env_fd, fn, strlen(fn), env_fn);
+      }
+      ck_write(env_fd, " ", 1, env_fn);
+      now++;
+    }
+    if(argv_count != 0){
+      ck_write(env_fd, "\n", 1, env_fn);
+      now = afl->argv;
+      while (*now) {
+        if (!strstr(*now, ".cur_input")) {
+          ck_write(env_fd, *now, strlen(*now), env_fn);
+        } else {
+          ck_write(env_fd, fn, strlen(fn), env_fn);
+        }
+        ck_write(env_fd, " ", 1, env_fn);
+        now++;
+      }
+    }
+    close(env_fd);
+  }
 
   return keeping;
 

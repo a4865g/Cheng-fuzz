@@ -1269,7 +1269,7 @@ void pivot_inputs(afl_state_t *afl) {
 
     if (unlikely(q->disabled)) { continue; }
 
-    u8 *nfn, *rsl = strrchr(q->fname, '/');
+    u8 *nfn, *envnfn, *rsl = strrchr(q->fname, '/');
     u32 orig_id;
 
     if (!rsl) {
@@ -1294,6 +1294,9 @@ void pivot_inputs(afl_state_t *afl) {
 
       afl->resuming_fuzz = 1;
       nfn = alloc_printf("%s/queue/%s", afl->out_dir, rsl);
+
+      if(afl->env_fuzz_flag)
+        envnfn = alloc_printf("%s/info/queue/%s", afl->out_dir, rsl);
 
       /* Since we're at it, let's also get the parent and figure out the
          appropriate depth for this entry. */
@@ -1336,9 +1339,17 @@ void pivot_inputs(afl_state_t *afl) {
       nfn = alloc_printf("%s/queue/id:%06u,time:0,execs:%llu,orig:%s",
                          afl->out_dir, id, afl->fsrv.total_execs, use_name);
 
+      if(afl->env_fuzz_flag){
+        envnfn = alloc_printf("%s/info/queue/id:%06u,time:0,execs:%llu,orig:%s",
+                         afl->out_dir, id, afl->fsrv.total_execs, use_name);
+      }
+
 #else
 
       nfn = alloc_printf("%s/queue/id_%06u", afl->out_dir, id);
+
+      if(afl->env_fuzz_flag)
+        envnfn = alloc_printf("%s/info/queue/id_%06u", afl->out_dir, id);
 
 #endif                                                    /* ^!SIMPLE_FILES */
 
@@ -1349,6 +1360,32 @@ void pivot_inputs(afl_state_t *afl) {
     link_or_copy(q->fname, nfn);
     ck_free(q->fname);
     q->fname = nfn;
+
+    /* save initial */
+    if (afl->env_fuzz_flag == 1) {
+      s32 qd;
+      qd = open(envnfn, O_WRONLY | O_CREAT | O_EXCL, 0600);
+      if (qd < 0) PFATAL("Unable to create '%s'", envnfn);
+      char **now = afl->env;
+      while (*now) {
+        ck_write(qd, *now, strlen(*now), envnfn);
+        ck_write(qd, " ", 1, envnfn);
+        now++;
+      }
+
+      if (argv_count != 0){
+        ck_write(qd, "\n", 1, envnfn);
+        now = afl->argv;
+        while (*now) {
+          ck_write(qd, *now, strlen(*now), envnfn);
+          ck_write(qd, " ", 1, envnfn);
+          now++;
+        }
+      }
+
+      close(qd);
+      ck_free(envnfn);
+    }
 
     /* Make sure that the passed_det value carries over, too. */
 
@@ -1734,6 +1771,35 @@ static void handle_existing_out_dir(afl_state_t *afl) {
   if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
   ck_free(fn);
 
+  /* Delete info dir */
+  if(afl->unicorn_mode == 1){
+    fn = alloc_printf("%s/info/total_crashes", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+    fn = alloc_printf("%s/info/crashes", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+    fn = alloc_printf("%s/info/hangs", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+    fn = alloc_printf("%s/info", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+  }else if(afl->env_fuzz_flag == 1){
+    fn = alloc_printf("%s/info/queue", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+    fn = alloc_printf("%s/info/hangs", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+    fn = alloc_printf("%s/info/crashes", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+    fn = alloc_printf("%s/info", afl->out_dir);
+    if (delete_files(fn, CASE_PREFIX)) { goto dir_cleanup_failed; }
+    ck_free(fn);
+  }
+
   /* All right, let's do <afl->out_dir>/crashes/id:* and
    * <afl->out_dir>/hangs/id:*. */
 
@@ -2025,6 +2091,35 @@ void setup_dirs_fds(afl_state_t *afl) {
   tmp = alloc_printf("%s/hangs", afl->out_dir);
   if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
   ck_free(tmp);
+
+  if(afl->unicorn_mode == 1){
+    /* CGI crash info */
+    tmp = alloc_printf("%s/info", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+    tmp = alloc_printf("%s/info/total_crashes", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+    tmp = alloc_printf("%s/info/crashes", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+    tmp = alloc_printf("%s/info/hangs", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+  }else if(afl->env_fuzz_flag == 1){
+    tmp = alloc_printf("%s/info", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+    tmp = alloc_printf("%s/info/crashes", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+    tmp = alloc_printf("%s/info/hangs", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+    tmp = alloc_printf("%s/info/queue", afl->out_dir);
+    if (mkdir(tmp, 0700)) { PFATAL("Unable to create '%s'", tmp); }
+    ck_free(tmp);
+  }
 
   /* Generally useful file descriptors. */
 

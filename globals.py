@@ -2,7 +2,7 @@ from xml.etree import ElementTree as ET
 import os
 import configparser
 
-wufuzz_path = '/home/wulearn/Wu-fuzz'
+wufuzz_path = '/home/wulearn/Desktop/My-fuzz'
 
 config = configparser.ConfigParser()
 config.read(wufuzz_path + '/config/' + 'wufuzz.cfg')

@@ -76,6 +76,8 @@
 #include <sys/file.h>
 #include <sys/types.h>
 
+#include "parse.h"
+
 #if defined(__APPLE__) || defined(__FreeBSD__) || defined(__OpenBSD__) || \
     defined(__NetBSD__) || defined(__DragonFly__)
   #include <sys/sysctl.h>
@@ -150,6 +152,7 @@ struct tainted {
 };
 
 struct queue_entry {
+  int env[parameter_array_size]; // TODO
 
   u8 *fname;                            /* File name for the test case      */
   u32 len;                              /* Input length                     */
@@ -410,6 +413,13 @@ struct foreign_sync {
 };
 
 typedef struct afl_state {
+
+  /* ENV */
+  u8 env_fuzz_flag;
+  char *xml_position;
+  int env_cnt;
+  char **env;
+  u8 *tmp_cur_input_locate;
 
   /* Position of this state in the global states list */
   u32 _id;
@@ -1089,6 +1099,15 @@ int  statsd_send_metric(afl_state_t *afl);
 int  statsd_format_metric(afl_state_t *afl, char *buff, size_t bufflen);
 
 /* Run */
+
+void random_env(afl_state_t *);
+void random_argv(afl_state_t *);
+void afl_reset_fsrv(afl_state_t *);
+
+/* WuLearn-fuzz */
+void detect_file_parm(afl_state_t *afl, u8 *prog_in, bool *use_stdin); // TODO
+void generate_arg(afl_state_t *, char **new_argv, char **argv, int argv_array[]);
+
 
 fsrv_run_result_t fuzz_run_target(afl_state_t *, afl_forkserver_t *fsrv, u32);
 void              write_to_testcase(afl_state_t *, void *, u32);

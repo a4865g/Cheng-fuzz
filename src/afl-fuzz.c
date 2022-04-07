@@ -443,6 +443,96 @@ fail:
 
   #endif
 
+/* Detect @@ in parm. */
+void detect_file_parm(afl_state_t *afl, u8 *prog_in, bool *use_stdin) {
+  u8 cwd[PATH_MAX];
+  if (getcwd(cwd, (size_t)sizeof(cwd)) == NULL) { PFATAL("getcwd() failed"); }
+
+  /* we are working with libc-heap-allocated argvs. So do not mix them with
+   * other allocation APIs like ck_alloc. That would disturb the free() calls.
+   */
+  char file_parameter[2] = "@@";
+  u8 * aa_loc = strstr(file_parameter, "@@");
+  if (aa_loc) {
+    if (!prog_in) { FATAL("@@ syntax is not supported by this tool."); }
+
+    *use_stdin = false;
+
+    /* Be sure that we're always using fully-qualified paths. */
+
+    *aa_loc = 0;
+
+    /* Construct a replacement argv value. */
+    u8 *n_arg;
+
+    if (prog_in[0] == '/') {
+      n_arg = alloc_printf("%s%s%s", file_parameter, prog_in, aa_loc + 2);
+      afl->tmp_cur_input_locate=alloc_printf("%s", prog_in);
+    } else {
+      n_arg =
+          alloc_printf("%s%s/%s%s", file_parameter, cwd, prog_in, aa_loc + 2);
+      afl->tmp_cur_input_locate=alloc_printf("/%s",prog_in);
+    }
+
+    // strcpy(file_parameter, n_arg);
+    for (int i = 0; i < argv_count; i++) {
+      for (int j = 0; j < argument[i].count; j++) {
+        if (strstr(argument[i].argument[j], "@@")) {
+          strcpy(argument[i].argument[j], afl->tmp_cur_input_locate);
+        }
+      }
+    }
+
+  }
+  /* argvs are automatically freed at exit. */
+}
+
+/* use argv array to malloc argv */
+void generate_arg(afl_state_t *afl, char **new_argv, char **argv,
+                  int argv_array[]) {
+  int argv_index = 0;
+  new_argv[argv_index] = (char *)ck_alloc(sizeof(char) * strlen(*argv) + 1);
+  sprintf(new_argv[argv_index], "%s", *argv);
+  argv_index++;
+
+  if (afl->fsrv.qemu_mode)  //???
+  {
+    // not handle wine
+    if (!afl->use_wine) {
+      new_argv[argv_index] =
+          (char *)ck_alloc(sizeof(char) * strlen(*(argv + 1)) + 1);
+      sprintf(new_argv[argv_index], "%s", *(argv + 1));
+      argv_index++;
+
+      new_argv[argv_index] =
+          (char *)ck_alloc(sizeof(char) * strlen(*(argv + 2)) + 1);
+      sprintf(new_argv[argv_index], "%s", *(argv + 2));
+      argv_index++;
+    }
+  }
+
+  for (int i = 0; i < argv_count; i++) {
+    if (argv_array[i] != 0) {
+      char *substr = NULL;
+      char  buf[parameter_strings_long];
+
+      strcpy(buf,
+             argument[i]
+                 .argument[argv_array[i] - 1]);  // choose argument[]
+      substr = strtok(buf, " ");
+
+      while (substr != NULL) {
+        new_argv[argv_index] =
+            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
+        sprintf(new_argv[argv_index], "%s", substr);
+        argv_index++;
+
+        substr = strtok(NULL, " ");
+      }
+    }
+  }
+}
+
 /* Main entry point */
 
 int main(int argc, char **argv_orig, char **envp) {
@@ -479,6 +569,9 @@ int main(int argc, char **argv_orig, char **envp) {
 
   if (get_afl_env("AFL_DEBUG")) { debug = afl->debug = 1; }
 
+  afl->env_cnt = 0;
+  afl->env_fuzz_flag = 0;
+
   afl_state_init(afl, map_size);
   afl->debug = debug;
   afl_fsrv_init(&afl->fsrv);
@@ -499,7 +592,7 @@ int main(int argc, char **argv_orig, char **envp) {
 
   while ((opt = getopt(
               argc, argv,
-              "+Ab:B:c:CdDe:E:hi:I:f:F:l:L:m:M:nNOXYo:p:RQs:S:t:T:UV:Wx:Z")) >
+              "+Ab:B:c:CdDe:E:hi:I:f:F:k:l:L:m:M:nNOXYo:p:RQs:S:t:T:UV:Wx:Z")) >
          0) {
 
     switch (opt) {
@@ -1220,6 +1313,19 @@ int main(int argc, char **argv_orig, char **envp) {
 
         break;
 
+      case 'k': /* setting xml file */
+
+        afl->xml_position = optarg;
+        if (access(afl->xml_position, F_OK) != -1) {
+          OKF("xml_position : %s", afl->xml_position);
+          parse_xml(afl->xml_position);
+          afl->env_fuzz_flag = 1;
+        } else {
+          FATAL("File doesn't exist!");
+        }
+
+        break;
+
       default:
         if (!show_help) { show_help = 1; }
 
@@ -1767,11 +1873,19 @@ int main(int argc, char **argv_orig, char **envp) {
 
   setup_cmdline_file(afl, argv + optind);
 
+  int first_argv[parameter_array_size];
+  memset(first_argv, 0, sizeof(first_argv));
+  if (afl->env_fuzz_flag == 1) {
+    for (int i = 0; i < argv_count; i++) {
+      if (argument[i].must) { first_argv[i] = 1; }
+    }
+  }
+
   read_testcases(afl, NULL);
   // read_foreign_testcases(afl, 1); for the moment dont do this
   OKF("Loaded a total of %u seeds.", afl->queued_items);
 
-  pivot_inputs(afl);
+  // pivot_inputs(afl);
 
   if (!afl->timeout_given) { find_timeout(afl); }  // only for resumes!
 
@@ -1843,6 +1957,17 @@ int main(int argc, char **argv_orig, char **envp) {
 
   }
 
+  if(afl->env_fuzz_flag){
+    if (afl->file_extension) {
+      afl->fsrv.out_file =
+          alloc_printf("%s/.cur_input.%s", afl->tmp_dir, afl->file_extension);
+
+    } else {
+      afl->fsrv.out_file = alloc_printf("%s/.cur_input", afl->tmp_dir);
+    }
+    detect_file_parm(afl, afl->fsrv.out_file, &afl->fsrv.use_stdin);
+  }
+
   if (!afl->fsrv.out_file) { setup_stdio_file(afl); }
 
   if (afl->cmplog_binary) {
@@ -1908,6 +2033,24 @@ int main(int argc, char **argv_orig, char **envp) {
 
     use_argv = argv + optind;
 
+  }
+
+  if(afl->env_fuzz_flag == 1){
+    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
+
+    if(argv_count != 0 ){
+      char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
+      memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
+      generate_arg(afl, init_argv, use_argv, first_argv);
+      use_argv = init_argv;
+
+      OKF("Init argv:");
+      char **now = use_argv;
+      while (*now) {
+        OKF("%s", *now);
+        now++;
+      }
+    }
   }
 
   if (afl->non_instrumented_mode || afl->fsrv.qemu_mode ||
@@ -2076,6 +2219,8 @@ int main(int argc, char **argv_orig, char **envp) {
 
   memset(afl->virgin_tmout, 255, map_size);
   memset(afl->virgin_crash, 255, map_size);
+
+  pivot_inputs(afl);
 
   perform_dry_run(afl);
 
