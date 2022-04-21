@@ -984,6 +984,7 @@ void random_argv(afl_state_t * afl) {
   char ** new_argv=(char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2));
   new_argv[argv_index] =(char *)ck_alloc(sizeof(char) * strlen(*afl->argv) + 1);
   sprintf(new_argv[argv_index], "%s", *afl->argv);
+  new_argv[argv_index][strlen(*afl->argv)]='\0';
   argv_index++;
 
   // add qemu argv
@@ -991,11 +992,13 @@ void random_argv(afl_state_t * afl) {
     new_argv[argv_index] =
         (char *)ck_alloc(sizeof(char) * strlen(*(afl->argv + 1)) + 1);
     sprintf(new_argv[argv_index], "%s", *(afl->argv + 1));
+    new_argv[argv_index][strlen(*(afl->argv + 1))]='\0';
     argv_index++;
 
     new_argv[argv_index] =
         (char *)ck_alloc(sizeof(char) * strlen(*(afl->argv + 2)) + 1);
     sprintf(new_argv[argv_index], "%s", *(afl->argv + 2));
+    new_argv[argv_index][strlen(*(afl->argv + 2))]='\0';
     argv_index++;
   }
   for (int i = 0 ; i < argv_count ; i++){
@@ -1011,6 +1014,7 @@ void random_argv(afl_state_t * afl) {
         new_argv[argv_index] =
             (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
         sprintf(new_argv[argv_index], "%s", substr);
+        new_argv[argv_index][strlen(substr)]='\0';
         argv_index++;
 
         substr = strtok(NULL, " ");
@@ -1029,6 +1033,7 @@ void random_argv(afl_state_t * afl) {
         new_argv[argv_index] =
             (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
         sprintf(new_argv[argv_index], "%s", substr);
+        new_argv[argv_index][strlen(substr)]='\0';
         argv_index++;
 
         substr = strtok(NULL, " ");
@@ -1036,8 +1041,10 @@ void random_argv(afl_state_t * afl) {
     }
 
   }
-
+  new_argv[argv_index + 1] = NULL;
+  afl->fsrv.pipe_argc = argv_index;
   afl->argv = new_argv; //replace
+  afl->fsrv.argv = new_argv;
 
 }
 
@@ -1073,11 +1080,11 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
   write_to_testcase(afl, out_buf, len);
 
   if(afl->env_fuzz_flag){
-    random_env(afl);
+    // random_env(afl);
     if(argv_count != 0){
       random_argv(afl);
     }
-    afl_reset_fsrv(afl);
+    // afl_reset_fsrv(afl);
   }
 
   fault = fuzz_run_target(afl, &afl->fsrv, afl->fsrv.exec_tmout);

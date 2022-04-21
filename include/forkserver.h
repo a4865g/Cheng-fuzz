@@ -167,7 +167,8 @@ typedef struct afl_forkserver {
   u32                   nyx_id;          /* nyx runner id (0 -> master)      */
   u32                   nyx_bind_cpu_id; /* nyx runner cpu id                */
 #endif
-
+  int pipe_argc;
+  char** argv;
 } afl_forkserver_t;
 
 typedef enum fsrv_run_result {

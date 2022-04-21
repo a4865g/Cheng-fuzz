@@ -1399,6 +1399,22 @@ fsrv_run_result_t afl_fsrv_run_target(afl_forkserver_t *fsrv, u32 timeout,
     RPFATAL(res, "Unable to request new process from fork server (OOM?)");
 
   }
+  OKF("ARGC: %d\n",fsrv->pipe_argc);
+  int aaa=0;
+  while(aaa<fsrv->pipe_argc){
+    OKF("%d: %s\n",aaa,fsrv->argv[aaa]);
+    aaa++;
+  }
+  write(fsrv->fsrv_ctl_fd,"0",1);
+  char argc_tmp[10] = {'\0'};
+  sprintf(argc_tmp, "%d", fsrv->pipe_argc);
+  write(fsrv->fsrv_ctl_fd, argc_tmp, 10);
+  for(int i = 0; i < fsrv->pipe_argc; i++) {
+    char argv_len[10] = {'\0'};
+    sprintf(argv_len, "%d", (int)strlen(fsrv->argv[i]));
+    write(fsrv->fsrv_ctl_fd, argv_len, 10); //len
+    write(fsrv->fsrv_ctl_fd, fsrv->argv[i], strlen(fsrv->argv[i])); //argv
+  }
 
   fsrv->last_run_timed_out = 0;
 

@@ -37,6 +37,9 @@
 #include <limits.h>
 #include <errno.h>
 
+#include <sys/stat.h>
+#include <fcntl.h>
+
 #include <sys/mman.h>
 #ifndef __HAIKU__
   #include <sys/syscall.h>
@@ -149,6 +152,10 @@ u32 __afl_already_initialized_second;
 /* Dummy pipe for area_is_valid() */
 
 static int __afl_dummy_fd[2] = {2, 2};
+
+/* ARGV */
+int pipe_argc = 0;
+int argv_count = 0;
 
 /* ensure we kill the child on termination */
 
@@ -898,9 +905,15 @@ static void __afl_start_snapshots(void) {
 
 #endif
 
+int null_pos = -1;
+char* null_content;
+void reset_argv_null(char** argv) {
+    argv[null_pos] = null_content;
+}
+
 /* Fork server logic. */
 
-static void __afl_start_forkserver(void) {
+static void __afl_start_forkserver(int *argc, char** argv) {
 
   if (__afl_already_initialized_forkserver) return;
   __afl_already_initialized_forkserver = 1;
@@ -1063,6 +1076,25 @@ static void __afl_start_forkserver(void) {
 
 #endif
 
+    char mode[1];
+    read(FORKSRV_FD, mode, 1);
+
+    if(mode[0] == '0') {
+        char argc_tmp[10] = {'\0'};
+        read(FORKSRV_FD, argc_tmp, 10);
+        pipe_argc = atoi(argc_tmp);
+        for(int i = 0; i < pipe_argc; i++) {
+            char argv_len[10] = {'\0'};
+            char argv_tmp[200] = {'\0'};
+            read(FORKSRV_FD, argv_len, 10);
+            int len = atoi(argv_len);
+            while(read(FORKSRV_FD, argv_tmp, len) == 0);
+            sprintf(argv[i], "%s", argv_tmp);
+        }
+        null_content = argv[pipe_argc];
+        null_pos = pipe_argc;
+        argv[pipe_argc] = NULL;
+    }
     /* If we stopped the child in persistent mode, but there was a race
        condition and afl-fuzz already issued SIGKILL, write off the old
        process. */
@@ -1213,7 +1245,7 @@ int __afl_persistent_loop(unsigned int max_cnt) {
 /* This one can be called from user code when deferred forkserver mode
     is enabled. */
 
-void __afl_manual_init(void) {
+void __afl_manual_init(int *argc, char** argv) {
 
   static u8 init_done;
 
@@ -1235,8 +1267,8 @@ void __afl_manual_init(void) {
   }
 
   if (!init_done) {
-
-    __afl_start_forkserver();
+    pipe_argc = *argc;
+    __afl_start_forkserver(argc, argv);
     init_done = 1;
 
   }
@@ -1245,7 +1277,7 @@ void __afl_manual_init(void) {
 
 /* Initialization of the forkserver - latest possible */
 
-__attribute__((constructor())) void __afl_auto_init(void) {
+__attribute__((constructor())) void __afl_auto_init(int argc, char** argv) {
 
 #ifdef __ANDROID__
   // Disable handlers in linker/debuggerd, check include/debuggerd/handler.h
@@ -1263,7 +1295,7 @@ __attribute__((constructor())) void __afl_auto_init(void) {
 
   if (getenv(DEFER_ENV_VAR)) return;
 
-  __afl_manual_init();
+  __afl_manual_init(&argc, argv);
 
 }
 

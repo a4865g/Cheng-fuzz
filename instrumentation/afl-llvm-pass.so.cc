@@ -52,6 +52,11 @@ typedef long double max_align_t;
 #include "llvm/Support/MathExtras.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 
+#include "llvm/IR/DerivedTypes.h"
+#include "llvm/IR/Type.h"
+#include "llvm/CodeGen/Register.h"
+#include "llvm/CodeGen/MachineOperand.h"
+
 #if LLVM_VERSION_MAJOR >= 4 || \
     (LLVM_VERSION_MAJOR == 3 && LLVM_VERSION_MINOR > 4)
   #include "llvm/IR/DebugInfo.h"
@@ -326,6 +331,7 @@ bool AFLCoverage::runOnModule(Module &M) {
       new GlobalVariable(M, PointerType::get(Int8Ty, 0), false,
                          GlobalValue::ExternalLinkage, 0, "__afl_area_ptr");
   GlobalVariable *AFLPrevLoc;
+  GlobalVariable *Pipe_argc = new GlobalVariable(M, Type::getInt32Ty(M.getContext()), false, GlobalValue::ExternalLinkage, 0, "pipe_argc");
   GlobalVariable *AFLPrevCaller;
   GlobalVariable *AFLContext = NULL;
 
@@ -429,11 +435,20 @@ bool AFLCoverage::runOnModule(Module &M) {
   /* Instrument all the things! */
 
   int inst_blocks = 0;
+  int main_flag = 0;
   scanForDangerousFunctions(&M);
 
   for (auto &F : M) {
 
     int has_calls = 0;
+
+    if(main_flag == 0) {
+        if(strcmp(F.getName().str().c_str(), "main") == 0) {
+            fprintf(stderr, "change main flag\n");
+            main_flag = 1;
+        }
+    }
+
     if (debug)
       fprintf(stderr, "FUNCTION: %s (%zu)\n", F.getName().str().c_str(),
               F.size());
@@ -447,6 +462,14 @@ bool AFLCoverage::runOnModule(Module &M) {
 
       BasicBlock::iterator IP = BB.getFirstInsertionPt();
       IRBuilder<>          IRB(&(*IP));
+
+      if(main_flag == 1) {
+          main_flag ++;
+          Value* Argc = IRB.CreateLoad(Type::getInt32Ty(M.getContext()), Pipe_argc);
+          if(F.arg_size()) {
+              F.getArg(0)->replaceAllUsesWith(Argc);
+          }
+      }
 
       // Context sensitive coverage
       if (instrument_ctx && &BB == &F.getEntryBlock()) {

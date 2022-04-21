@@ -329,8 +329,6 @@ static void usage(u8 *argv0, int more_help) {
 
 }
 
-#ifndef AFL_LIB
-
 static int stricmp(char const *a, char const *b) {
 
   if (!a || !b) { FATAL("Null reference"); }
@@ -493,6 +491,7 @@ void generate_arg(afl_state_t *afl, char **new_argv, char **argv,
   int argv_index = 0;
   new_argv[argv_index] = (char *)ck_alloc(sizeof(char) * strlen(*argv) + 1);
   sprintf(new_argv[argv_index], "%s", *argv);
+  new_argv[argv_index][strlen(*afl->argv)]='\0';
   argv_index++;
 
   if (afl->fsrv.qemu_mode)  //???
@@ -502,11 +501,13 @@ void generate_arg(afl_state_t *afl, char **new_argv, char **argv,
       new_argv[argv_index] =
           (char *)ck_alloc(sizeof(char) * strlen(*(argv + 1)) + 1);
       sprintf(new_argv[argv_index], "%s", *(argv + 1));
+      new_argv[argv_index][strlen(*(afl->argv + 1))]='\0';
       argv_index++;
 
       new_argv[argv_index] =
           (char *)ck_alloc(sizeof(char) * strlen(*(argv + 2)) + 1);
       sprintf(new_argv[argv_index], "%s", *(argv + 2));
+      new_argv[argv_index][strlen(*(afl->argv + 2))]='\0';
       argv_index++;
     }
   }
@@ -525,12 +526,34 @@ void generate_arg(afl_state_t *afl, char **new_argv, char **argv,
         new_argv[argv_index] =
             (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
         sprintf(new_argv[argv_index], "%s", substr);
+        new_argv[argv_index][strlen(substr)]='\0';
         argv_index++;
 
         substr = strtok(NULL, " ");
       }
     }
   }
+  new_argv[argv_index + 1] = NULL;
+  afl->fsrv.pipe_argc=argv_index;
+  afl->argv = new_argv;
+  afl->fsrv.argv = new_argv;
+}
+
+#ifndef AFL_LIB
+void max_argv(afl_state_t *afl, char** argv, char*** init_argv) {
+    afl->fsrv.pipe_argc = 199;
+    *init_argv = (char **)ck_alloc(sizeof(char*) * 200);
+    (*init_argv)[0] = (char*)ck_alloc(sizeof(char) * 200);
+    sprintf((*init_argv)[0], "%s", argv[0]);
+    (*init_argv)[0][strlen(argv[0])] = '\0';
+
+    for(int i = 0; i < 199; i++) {
+
+        (*init_argv)[i + 1] = (char*)ck_alloc(sizeof(char) * 200);
+        memset((*init_argv)[i+1], '0', 200 - 1);
+        (*init_argv)[i+1][199] = '\0';
+    }
+    (*init_argv)[199] = NULL;
 }
 
 /* Main entry point */
@@ -2039,11 +2062,12 @@ int main(int argc, char **argv_orig, char **envp) {
     afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
 
     if(argv_count != 0 ){
-      char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
-      memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
-      generate_arg(afl, init_argv, use_argv, first_argv);
+      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
+      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
+      // generate_arg(afl, init_argv, use_argv, first_argv);
+      char **init_argv;
+      max_argv(afl, use_argv, &init_argv);
       use_argv = init_argv;
-
       OKF("Init argv:");
       char **now = use_argv;
       while (*now) {
@@ -2219,6 +2243,24 @@ int main(int argc, char **argv_orig, char **envp) {
 
   memset(afl->virgin_tmout, 255, map_size);
   memset(afl->virgin_crash, 255, map_size);
+
+  if(afl->env_fuzz_flag == 1){
+    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
+
+    if(argv_count != 0 ){
+      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
+      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
+      // generate_arg(afl, init_argv, use_argv, first_argv);
+      // use_argv = init_argv;
+      // OKF("Init argv:");
+      // char **now = use_argv;
+      // while (*now) {
+      //   OKF("%s", *now);
+      //   now++;
+      // }
+      afl->fsrv.argv = afl->argv;
+    }
+  }
 
   pivot_inputs(afl);
 
