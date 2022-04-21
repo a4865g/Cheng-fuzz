@@ -885,9 +885,9 @@ void perform_dry_run(afl_state_t *afl) {
     ck_read(fd, use_mem, read_len, q->fname);
 
     close(fd);
-
+    OKF("A");
     res = calibrate_case(afl, q, use_mem, 0, 1);
-
+    OKF("A");
     if (afl->stop_soon) { return; }
 
     if (res == afl->crash_mode || res == FSRV_RUN_NOBITS) {
@@ -1360,49 +1360,57 @@ void pivot_inputs(afl_state_t *afl) {
     link_or_copy(q->fname, nfn);
     ck_free(q->fname);
     q->fname = nfn;
-
-    /* save initial */
-    if (afl->env_fuzz_flag == 1) {
-      s32 qd;
-      qd = open(envnfn, O_WRONLY | O_CREAT | O_EXCL, 0600);
-      if (qd < 0) PFATAL("Unable to create '%s'", envnfn);
-      char **now = afl->env;
-      while (*now) {
-        ck_write(qd, *now, strlen(*now), envnfn);
-        ck_write(qd, " ", 1, envnfn);
-        now++;
-      }
-
-      if (argv_count != 0){
-        ck_write(qd, "\n", 1, envnfn);
-        now = afl->argv;
-        while (*now) {
-          ck_write(qd, *now, strlen(*now), envnfn);
-          ck_write(qd, " ", 1, envnfn);
-          now++;
-        }
-      }
-
-      close(qd);
-      ck_free(envnfn);
-    }
-
+    // OKF("A");
+    // /* save initial */
+    // if (afl->env_fuzz_flag == 1) {
+    //   s32 qd;
+    //   OKF("A");
+    //   qd = open(envnfn, O_WRONLY | O_CREAT | O_EXCL, 0600);
+    //   OKF("A");
+    //   if (qd < 0) PFATAL("Unable to create '%s'", envnfn);
+    //   OKF("A");
+    //   char **now = afl->env;
+    //   OKF("A");
+    //   // while (*now) {
+    //   //   OKF("!!!");
+    //   //   ck_write(qd, *now, strlen(*now), envnfn);
+    //   //   ck_write(qd, " ", 1, envnfn);
+    //   //   now++;
+    //   // }
+    //   if (argv_count != 0){
+    //     OKF("A");
+    //     ck_write(qd, "\n", 1, envnfn);
+    //     OKF("B");
+    //     now = afl->argv;
+    //     OKF("C");
+    //     while (*now) {
+    //       OKF("D");
+    //       ck_write(qd, *now, strlen(*now), envnfn);
+    //       OKF("e");
+    //       ck_write(qd, " ", 1, envnfn);
+    //       OKF("F");
+    //       now++;
+    //     }
+    //     OKF("A");
+    //   }
+    //   OKF("A");
+    //   close(qd);
+    //   OKF("A");
+    //   ck_free(envnfn);
+    // }
+    
     /* Make sure that the passed_det value carries over, too. */
 
     if (q->passed_det) { mark_as_det_done(afl, q); }
-
     if (afl->custom_mutators_count) {
 
       run_afl_custom_queue_new_entry(afl, q, q->fname, NULL);
 
     }
-
     ++id;
 
   }
-
   if (afl->in_place_resume) { nuke_resume_dir(afl); }
-
 }
 
 /* When resuming, try to find the queue position to start from. This makes sense

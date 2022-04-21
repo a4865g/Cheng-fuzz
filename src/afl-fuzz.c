@@ -1908,8 +1908,8 @@ int main(int argc, char **argv_orig, char **envp) {
   // read_foreign_testcases(afl, 1); for the moment dont do this
   OKF("Loaded a total of %u seeds.", afl->queued_items);
 
-  // pivot_inputs(afl);
-
+  pivot_inputs(afl);
+  
   if (!afl->timeout_given) { find_timeout(afl); }  // only for resumes!
 
   if ((afl->tmp_dir = afl->afl_env.afl_tmpdir) != NULL &&
@@ -2058,25 +2058,6 @@ int main(int argc, char **argv_orig, char **envp) {
 
   }
 
-  if(afl->env_fuzz_flag == 1){
-    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
-
-    if(argv_count != 0 ){
-      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
-      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
-      // generate_arg(afl, init_argv, use_argv, first_argv);
-      char **init_argv;
-      max_argv(afl, use_argv, &init_argv);
-      use_argv = init_argv;
-      OKF("Init argv:");
-      char **now = use_argv;
-      while (*now) {
-        OKF("%s", *now);
-        now++;
-      }
-    }
-  }
-
   if (afl->non_instrumented_mode || afl->fsrv.qemu_mode ||
       afl->fsrv.frida_mode || afl->fsrv.cs_mode || afl->unicorn_mode) {
 
@@ -2091,6 +2072,44 @@ int main(int argc, char **argv_orig, char **envp) {
     afl->first_trace = ck_realloc(afl->first_trace, map_size);
     afl->map_tmp_buf = ck_realloc(afl->map_tmp_buf, map_size);
 
+  }
+
+  if(afl->env_fuzz_flag == 1){
+    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
+
+    if(argv_count != 0 ){
+      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
+      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
+      // generate_arg(afl, init_argv, use_argv, first_argv);
+      char **init_argv;
+      max_argv(afl, use_argv, &init_argv);
+      use_argv = init_argv;
+      afl->argv = use_argv;
+      // OKF("Init argv:");
+      // char **now = use_argv;
+      // while (*now) {
+      //   OKF("%s", *now);
+      //   now++;
+      // }
+    }
+  }
+
+  if(afl->env_fuzz_flag == 1){
+    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
+
+    if(argv_count != 0 ){
+      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
+      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
+      // generate_arg(afl, init_argv, use_argv, first_argv);
+      // use_argv = init_argv;
+      // OKF("Init argv:");
+      // char **now = use_argv;
+      // while (*now) {
+      //   OKF("%s", *now);
+      //   now++;
+      // }
+      afl->fsrv.argv = afl->argv;
+    }
   }
 
   afl->argv = use_argv;
@@ -2244,28 +2263,15 @@ int main(int argc, char **argv_orig, char **envp) {
   memset(afl->virgin_tmout, 255, map_size);
   memset(afl->virgin_crash, 255, map_size);
 
-  if(afl->env_fuzz_flag == 1){
-    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
+  
 
-    if(argv_count != 0 ){
-      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
-      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
-      // generate_arg(afl, init_argv, use_argv, first_argv);
-      // use_argv = init_argv;
-      // OKF("Init argv:");
-      // char **now = use_argv;
-      // while (*now) {
-      //   OKF("%s", *now);
-      //   now++;
-      // }
-      afl->fsrv.argv = afl->argv;
-    }
-  }
-
-  pivot_inputs(afl);
+  // pivot_inputs(afl);
 
   perform_dry_run(afl);
-
+  OKF("AAAAAAAAAAAAAAAA");
+  afl_fsrv_start(&afl->fsrv, afl->argv, &afl->stop_soon,
+                     afl->afl_env.afl_debug_child);
+  OKF("AAAAAAAAAAAAAAAA");
   if (afl->q_testcase_max_cache_entries) {
 
     afl->q_testcase_cache =

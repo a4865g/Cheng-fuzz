@@ -1075,7 +1075,9 @@ static void __afl_start_forkserver(int *argc, char** argv) {
     }
 
 #endif
-
+    if(null_pos != -1){
+      reset_argv_null(argv);
+    }
     char mode[1];
     read(FORKSRV_FD, mode, 1);
 
