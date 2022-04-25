@@ -981,18 +981,17 @@ void random_env(afl_state_t *afl){
 
 void random_argv(afl_state_t * afl) {
   int argv_index = 0;
-  char ** new_argv=(char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2));
-  new_argv[argv_index] =(char *)ck_alloc(sizeof(char) * strlen(*afl->argv) + 1);
-  sprintf(new_argv[argv_index], "%s", *afl->argv);
-  new_argv[argv_index][strlen(*afl->argv)]='\0';
+  char ** new_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2));
+  new_argv[argv_index] =(char *)ck_alloc(sizeof(char) * strlen(*(afl->argv)) + 1);
+  sprintf(new_argv[argv_index], "%s", *(afl->argv));
+  new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
   argv_index++;
-
   // add qemu argv
   if (afl->fsrv.qemu_mode) {
     new_argv[argv_index] =
         (char *)ck_alloc(sizeof(char) * strlen(*(afl->argv + 1)) + 1);
     sprintf(new_argv[argv_index], "%s", *(afl->argv + 1));
-    new_argv[argv_index][strlen(*(afl->argv + 1))]='\0';
+    new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
     argv_index++;
 
     new_argv[argv_index] =
@@ -1041,11 +1040,15 @@ void random_argv(afl_state_t * afl) {
     }
 
   }
-  new_argv[argv_index + 1] = NULL;
+  new_argv[argv_index] = NULL;
   afl->fsrv.pipe_argc = argv_index;
+  for(int i=0;i<afl->argv_index;i++){
+    ck_free(afl->argv[i]);
+  }
+  ck_free(afl->argv);
+  afl->argv_index=argv_index;
   afl->argv = new_argv; //replace
-  afl->fsrv.argv = new_argv;
-
+  afl->fsrv.argv = afl->argv;
 }
 
 void afl_reset_fsrv(afl_state_t *afl) {
@@ -1086,7 +1089,11 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
     }
     // afl_reset_fsrv(afl);
   }
-
+  // char **now = afl->argv;
+  // while (*now) {
+  //   OKF("%s", *now);
+  //   now++;
+  // }
   fault = fuzz_run_target(afl, &afl->fsrv, afl->fsrv.exec_tmout);
 
   if (afl->stop_soon) { return 1; }
@@ -1127,7 +1134,7 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
     show_stats(afl);
 
   }
-
+  
   return 0;
 
 }

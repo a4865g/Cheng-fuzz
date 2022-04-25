@@ -413,7 +413,8 @@ struct foreign_sync {
 };
 
 typedef struct afl_state {
-
+  char** now;
+  int argv_index;
   /* ENV */
   u8 env_fuzz_flag;
   char *xml_position;

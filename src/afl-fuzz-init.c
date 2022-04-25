@@ -885,9 +885,7 @@ void perform_dry_run(afl_state_t *afl) {
     ck_read(fd, use_mem, read_len, q->fname);
 
     close(fd);
-    OKF("A");
     res = calibrate_case(afl, q, use_mem, 0, 1);
-    OKF("A");
     if (afl->stop_soon) { return; }
 
     if (res == afl->crash_mode || res == FSRV_RUN_NOBITS) {
@@ -1398,7 +1396,6 @@ void pivot_inputs(afl_state_t *afl) {
     //   OKF("A");
     //   ck_free(envnfn);
     // }
-    
     /* Make sure that the passed_det value carries over, too. */
 
     if (q->passed_det) { mark_as_det_done(afl, q); }

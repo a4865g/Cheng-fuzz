@@ -605,19 +605,31 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
       if (unlikely(env_fd < 0)) {
         PFATAL("Unable to create '%s'", env_queue_fn);
       }
-      char **now = afl->env;
-      while (*now) {
-        ck_write(env_fd, *now, strlen(*now), env_queue_fn);
+      // char **now = afl->env;
+      // while (*now) {
+      //   ck_write(env_fd, *now, strlen(*now), env_queue_fn);
+      //   ck_write(env_fd, " ", 1, env_queue_fn);
+      //   now++;
+      // }
+      afl->now=afl->env;
+      while(*afl->now){
+        ck_write(env_fd, *afl->now, strlen(*afl->now), env_queue_fn);
         ck_write(env_fd, " ", 1, env_queue_fn);
-        now++;
+        afl->now++;
       }
       if (argv_count!=0){
         ck_write(env_fd, "\n", 1, env_queue_fn);
-        now = afl->argv;
-        while (*now) {
-          ck_write(env_fd, *now, strlen(*now), env_queue_fn);
+        // now = afl->argv;
+        // while (*now) {
+        //   ck_write(env_fd, *now, strlen(*now), env_queue_fn);
+        //   ck_write(env_fd, " ", 1, env_queue_fn);
+        //   now++;
+        // }
+        afl->now=afl->argv;
+        while (*afl->now) {
+          ck_write(env_fd, *afl->now, strlen(*afl->now), env_queue_fn);
           ck_write(env_fd, " ", 1, env_queue_fn);
-          now++;
+          afl->now++;
         }
       }
       close(env_fd);
@@ -871,30 +883,52 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
     char *now=load_info_file(tmp);
     ck_write(env_fd, now, strlen(now), env_fn);
     close(env_fd);
+    // free(tmp); //
+    free(now); //
   }else if(afl->env_fuzz_flag == 1){
     env_fd = open(env_fn, O_WRONLY | O_CREAT | O_EXCL, 0600);
     if (unlikely(env_fd < 0)) { PFATAL("Unable to create '%s'", env_fn); }
-    char **now = afl->env;
-    while (*now) {
-      if (!strstr(*now, ".cur_input")) {
-        ck_write(env_fd, *now, strlen(*now), env_fn);
+    // char **now = afl->env;
+    // while (*now) {
+    //   if (!strstr(*now, ".cur_input")) {
+    //     ck_write(env_fd, *now, strlen(*now), env_fn);
+    //   } else {
+    //     ck_write(env_fd, fn, strlen(fn), env_fn);
+    //   }
+    //   ck_write(env_fd, " ", 1, env_fn);
+    //   now++;
+    // }
+    afl->now=afl->env;
+    while (*afl->now) {
+      if (!strstr(*afl->now, ".cur_input")) {
+        ck_write(env_fd, *afl->now, strlen(*afl->now), env_fn);
       } else {
         ck_write(env_fd, fn, strlen(fn), env_fn);
       }
       ck_write(env_fd, " ", 1, env_fn);
-      now++;
+      afl->now++;
     }
     if(argv_count != 0){
       ck_write(env_fd, "\n", 1, env_fn);
-      now = afl->argv;
-      while (*now) {
-        if (!strstr(*now, ".cur_input")) {
-          ck_write(env_fd, *now, strlen(*now), env_fn);
+      // now = afl->argv;
+      // while (*now) {
+      //   if (!strstr(*now, ".cur_input")) {
+      //     ck_write(env_fd, *now, strlen(*now), env_fn);
+      //   } else {
+      //     ck_write(env_fd, fn, strlen(fn), env_fn);
+      //   }
+      //   ck_write(env_fd, " ", 1, env_fn);
+      //   now++;
+      // }
+      afl->now=afl->argv;
+      while (*afl->now) {
+        if (!strstr(*afl->now, ".cur_input")) {
+          ck_write(env_fd, *afl->now, strlen(*afl->now), env_fn);
         } else {
           ck_write(env_fd, fn, strlen(fn), env_fn);
         }
         ck_write(env_fd, " ", 1, env_fn);
-        now++;
+        afl->now++;
       }
     }
     close(env_fd);

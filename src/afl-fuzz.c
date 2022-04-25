@@ -535,6 +535,7 @@ void generate_arg(afl_state_t *afl, char **new_argv, char **argv,
   }
   new_argv[argv_index + 1] = NULL;
   afl->fsrv.pipe_argc=argv_index;
+  afl->argv_index=argv_index;
   afl->argv = new_argv;
   afl->fsrv.argv = new_argv;
 }
@@ -589,7 +590,9 @@ int main(int argc, char **argv_orig, char **envp) {
 
   afl_state_t *afl = calloc(1, sizeof(afl_state_t));
   if (!afl) { FATAL("Could not create afl state"); }
-
+  // for(int i=0;i<parameter_strings_long * 2-1;i++){
+  //   afl->new_argv[i]=(char *)ck_alloc(sizeof(char) * 200);
+  // }
   if (get_afl_env("AFL_DEBUG")) { debug = afl->debug = 1; }
 
   afl->env_cnt = 0;
@@ -2085,6 +2088,7 @@ int main(int argc, char **argv_orig, char **envp) {
       max_argv(afl, use_argv, &init_argv);
       use_argv = init_argv;
       afl->argv = use_argv;
+      afl->argv_index=199;
       // OKF("Init argv:");
       // char **now = use_argv;
       // while (*now) {
@@ -2268,10 +2272,10 @@ int main(int argc, char **argv_orig, char **envp) {
   // pivot_inputs(afl);
 
   perform_dry_run(afl);
-  OKF("AAAAAAAAAAAAAAAA");
+
   afl_fsrv_start(&afl->fsrv, afl->argv, &afl->stop_soon,
                      afl->afl_env.afl_debug_child);
-  OKF("AAAAAAAAAAAAAAAA");
+
   if (afl->q_testcase_max_cache_entries) {
 
     afl->q_testcase_cache =
@@ -2586,7 +2590,7 @@ int main(int argc, char **argv_orig, char **envp) {
         afl->queue_cur = afl->queue_buf[afl->current_entry];
 
       }
-
+      
       skipped_fuzz = fuzz_one(afl);
 
       if (unlikely(!afl->stop_soon && exit_1)) { afl->stop_soon = 2; }
