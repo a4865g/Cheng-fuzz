@@ -906,6 +906,9 @@ static void __afl_start_snapshots(void) {
 #endif
 
 int null_pos = -1;
+int env_first_flag = 1;
+int env_count = 0;
+char** env_all;
 char* null_content;
 void reset_argv_null(char** argv) {
     argv[null_pos] = null_content;
@@ -1081,21 +1084,66 @@ static void __afl_start_forkserver(int *argc, char** argv) {
     char mode[1];
     read(FORKSRV_FD, mode, 1);
 
-    if(mode[0] == '0') {
-        char argc_tmp[10] = {'\0'};
-        read(FORKSRV_FD, argc_tmp, 10);
-        pipe_argc = atoi(argc_tmp);
-        for(int i = 0; i < pipe_argc; i++) {
-            char argv_len[10] = {'\0'};
-            char argv_tmp[200] = {'\0'};
-            read(FORKSRV_FD, argv_len, 10);
-            int len = atoi(argv_len);
-            while(read(FORKSRV_FD, argv_tmp, len) == 0);
-            sprintf(argv[i], "%s", argv_tmp);
+    if(mode[0] != '0'){
+      if(mode[0] == '2'){
+        if(env_first_flag == 1){
+          //get all env
+          FILE *fp=fopen("/home/wulearn/Desktop/My-fuzz/test_target/test_env/ddd.txt","a+");
+          fprintf(fp,"NO!!!!!!!!!!!!\n");
+          fclose(fp);
+          char env_tmp[10] = {'\0'};
+          read(FORKSRV_FD, env_tmp, 10);
+          env_count = atoi(env_tmp);
+          env_all = malloc(sizeof(char *) * (env_count + 1));
+          for(int i = 0; i < env_count; i++) {
+            char env_len[10] = {'\0'};
+            char env_tmp[200] = {'\0'};
+            read(FORKSRV_FD, env_len, 10);
+            int len = atoi(env_len);
+            read(FORKSRV_FD,env_tmp,len);
+            env_all[i] = malloc(sizeof(char ) * (strlen(env_tmp) + 1));
+            sprintf(env_all[i], "%s", env_tmp);
+          }
+          env_first_flag = 0;
+        }else{
+          //unset
+          for(int i=0; i< env_count;i++){
+            unsetenv(env_all[i]);
+          }
         }
-        null_content = argv[pipe_argc];
-        null_pos = pipe_argc;
-        argv[pipe_argc] = NULL;
+        // FILE *fp=fopen("/home/wulearn/Desktop/My-fuzz/test_target/test_env/ddd.txt","a+");
+        // fprintf(fp,"[env_count]: %d\n",env_count);
+        // fclose(fp);
+        for(int i = 0; i < env_count; i++) {
+          char env_name_len[10] = {'\0'};
+          char env_name_tmp[200] = {'\0'};
+          read(FORKSRV_FD, env_name_len, 10);
+          int len = atoi(env_name_len);
+          read(FORKSRV_FD,env_name_tmp,len);
+
+          char env_value_len[10] = {'\0'};
+          char env_value_tmp[200] = {'\0'};
+          read(FORKSRV_FD, env_value_len, 10);
+          len = atoi(env_value_len);
+          read(FORKSRV_FD,env_value_tmp,len);
+
+          setenv(env_name_tmp,env_value_tmp,1);
+        }
+      }
+      char argc_tmp[10] = {'\0'};
+      read(FORKSRV_FD, argc_tmp, 10);
+      pipe_argc = atoi(argc_tmp);
+      for(int i = 0; i < pipe_argc; i++) {
+          char argv_len[10] = {'\0'};
+          char argv_tmp[200] = {'\0'};
+          read(FORKSRV_FD, argv_len, 10);
+          int len = atoi(argv_len);
+          while(read(FORKSRV_FD, argv_tmp, len) == 0);
+          sprintf(argv[i], "%s", argv_tmp);
+      }
+      null_content = argv[pipe_argc];
+      null_pos = pipe_argc;
+      argv[pipe_argc] = NULL;
     }
     /* If we stopped the child in persistent mode, but there was a race
        condition and afl-fuzz already issued SIGKILL, write off the old

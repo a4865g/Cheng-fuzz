@@ -169,6 +169,15 @@ typedef struct afl_forkserver {
 #endif
   int pipe_argc;
   char** argv;
+  char** env_all_name;
+  char** env_value;
+  char** env_name;
+  // char** env_value;
+  u8 env_fuzz_flag;
+  u8 run_target_flag;
+  int argv_count;
+  int env_count;
+  int env_first_send;
 } afl_forkserver_t;
 
 typedef enum fsrv_run_result {

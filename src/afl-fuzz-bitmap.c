@@ -611,11 +611,13 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
       //   ck_write(env_fd, " ", 1, env_queue_fn);
       //   now++;
       // }
-      afl->now=afl->env;
-      while(*afl->now){
-        ck_write(env_fd, *afl->now, strlen(*afl->now), env_queue_fn);
-        ck_write(env_fd, " ", 1, env_queue_fn);
-        afl->now++;
+      if(env_count != 0){
+        afl->now=afl->env;
+        while(*afl->now){
+          ck_write(env_fd, *afl->now, strlen(*afl->now), env_queue_fn);
+          ck_write(env_fd, " ", 1, env_queue_fn);
+          afl->now++;
+        }
       }
       if (argv_count!=0){
         ck_write(env_fd, "\n", 1, env_queue_fn);
@@ -898,15 +900,17 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
     //   ck_write(env_fd, " ", 1, env_fn);
     //   now++;
     // }
-    afl->now=afl->env;
-    while (*afl->now) {
-      if (!strstr(*afl->now, ".cur_input")) {
-        ck_write(env_fd, *afl->now, strlen(*afl->now), env_fn);
-      } else {
-        ck_write(env_fd, fn, strlen(fn), env_fn);
+    if(env_count != 0){
+      afl->now=afl->env;
+      while (*afl->now) {
+        if (!strstr(*afl->now, ".cur_input")) {
+          ck_write(env_fd, *afl->now, strlen(*afl->now), env_fn);
+        } else {
+          ck_write(env_fd, fn, strlen(fn), env_fn);
+        }
+        ck_write(env_fd, " ", 1, env_fn);
+        afl->now++;
       }
-      ck_write(env_fd, " ", 1, env_fn);
-      afl->now++;
     }
     if(argv_count != 0){
       ck_write(env_fd, "\n", 1, env_fn);

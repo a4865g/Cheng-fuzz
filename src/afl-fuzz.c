@@ -597,7 +597,8 @@ int main(int argc, char **argv_orig, char **envp) {
 
   afl->env_cnt = 0;
   afl->env_fuzz_flag = 0;
-
+  afl->fsrv.env_fuzz_flag = 0;
+  afl->fsrv.run_target_flag = 0;
   afl_state_init(afl, map_size);
   afl->debug = debug;
   afl_fsrv_init(&afl->fsrv);
@@ -1346,6 +1347,9 @@ int main(int argc, char **argv_orig, char **envp) {
           OKF("xml_position : %s", afl->xml_position);
           parse_xml(afl->xml_position);
           afl->env_fuzz_flag = 1;
+          afl->fsrv.env_fuzz_flag = 1;
+          afl->fsrv.argv_count = argv_count;
+          afl->fsrv.env_count = env_count;
         } else {
           FATAL("File doesn't exist!");
         }
@@ -2078,8 +2082,18 @@ int main(int argc, char **argv_orig, char **envp) {
   }
 
   if(afl->env_fuzz_flag == 1){
-    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
-
+    if(env_count != 0){
+      afl->fsrv.env_first_send = 1;
+      // afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
+      afl->env = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+      afl->fsrv.env_all_name = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+      afl->fsrv.env_name = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+      afl->fsrv.env_value = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+      for(int i=0;i<env_count;i++){
+        afl->fsrv.env_all_name[i] = (char *)ck_alloc(sizeof(char ) * (strlen(environment[i].name) + 1));
+        sprintf(afl->fsrv.env_all_name[i],"%s",environment[i].name);
+      }
+    }
     if(argv_count != 0 ){
       // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
       // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
@@ -2088,6 +2102,7 @@ int main(int argc, char **argv_orig, char **envp) {
       max_argv(afl, use_argv, &init_argv);
       use_argv = init_argv;
       afl->argv = use_argv;
+      afl->fsrv.argv = afl->argv;
       afl->argv_index=199;
       // OKF("Init argv:");
       // char **now = use_argv;
@@ -2098,23 +2113,23 @@ int main(int argc, char **argv_orig, char **envp) {
     }
   }
 
-  if(afl->env_fuzz_flag == 1){
-    afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
+  // if(afl->env_fuzz_flag == 1){
+  //   afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
 
-    if(argv_count != 0 ){
-      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
-      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
-      // generate_arg(afl, init_argv, use_argv, first_argv);
-      // use_argv = init_argv;
-      // OKF("Init argv:");
-      // char **now = use_argv;
-      // while (*now) {
-      //   OKF("%s", *now);
-      //   now++;
-      // }
-      afl->fsrv.argv = afl->argv;
-    }
-  }
+  //   if(argv_count != 0 ){
+  //     // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
+  //     // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
+  //     // generate_arg(afl, init_argv, use_argv, first_argv);
+  //     // use_argv = init_argv;
+  //     // OKF("Init argv:");
+  //     // char **now = use_argv;
+  //     // while (*now) {
+  //     //   OKF("%s", *now);
+  //     //   now++;
+  //     // }
+      
+  //   }
+  // }
 
   afl->argv = use_argv;
   afl->fsrv.trace_bits =
