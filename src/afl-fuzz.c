@@ -2084,52 +2084,19 @@ int main(int argc, char **argv_orig, char **envp) {
   if(afl->env_fuzz_flag == 1){
     if(env_count != 0){
       afl->fsrv.env_first_send = 1;
-      // afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
-      afl->env = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
-      afl->fsrv.env_all_name = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
-      afl->fsrv.env_name = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
-      afl->fsrv.env_value = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
-      // for(int i=0;i<env_count;i++){
-      //   afl->fsrv.env_all_name[i] = (char *)ck_alloc(sizeof(char ) * (strlen(environment[i].name) + 1));
-      //   sprintf(afl->fsrv.env_all_name[i],"%s",environment[i].name);
-      // }
+      afl->fsrv.env_index = 0;
+      // afl->env = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+      afl->fsrv.env_all = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
     }
     if(argv_count != 0 ){
-      // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
-      // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
-      // generate_arg(afl, init_argv, use_argv, first_argv);
       char **init_argv;
       max_argv(afl, use_argv, &init_argv);
       use_argv = init_argv;
       afl->argv = use_argv;
       afl->fsrv.argv = afl->argv;
       afl->argv_index=199;
-      // OKF("Init argv:");
-      // char **now = use_argv;
-      // while (*now) {
-      //   OKF("%s", *now);
-      //   now++;
-      // }
     }
   }
-
-  // if(afl->env_fuzz_flag == 1){
-  //   afl->env = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2 + 1));
-
-  //   if(argv_count != 0 ){
-  //     // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
-  //     // memset(init_argv, 0, sizeof(char *) * (parameter_strings_long*2));
-  //     // generate_arg(afl, init_argv, use_argv, first_argv);
-  //     // use_argv = init_argv;
-  //     // OKF("Init argv:");
-  //     // char **now = use_argv;
-  //     // while (*now) {
-  //     //   OKF("%s", *now);
-  //     //   now++;
-  //     // }
-      
-  //   }
-  // }
 
   afl->argv = use_argv;
   afl->fsrv.trace_bits =

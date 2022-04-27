@@ -909,8 +909,6 @@ int null_pos = -1;
 int env_first_flag = 1;
 int env_count = 0;
 char** env_all;
-char** env_name;
-char** env_value;
 char* null_content;
 void reset_argv_null(char** argv) {
     argv[null_pos] = null_content;
@@ -1089,72 +1087,32 @@ static void __afl_start_forkserver(int *argc, char** argv) {
       if(mode[0] == '2'){
         if(env_first_flag == 1){
           //get all env
-
           char env_tmp[10] = {'\0'};
           read(FORKSRV_FD, env_tmp, 10);
           env_count = atoi(env_tmp);
-          // env_all = malloc(sizeof(char *) * (env_count + 1));
-          // for(int i = 0; i < env_count; i++) {
-          //   char env_len[10] = {'\0'};
-          //   char env_tmp[200] = {'\0'};
-          //   read(FORKSRV_FD, env_len, 10);
-          //   int len = atoi(env_len);
-          //   read(FORKSRV_FD,env_tmp,len);
-          //   env_all[i] = malloc(sizeof(char ) * (strlen(env_tmp) + 1));
-          //   sprintf(env_all[i], "%s", env_tmp);
-          // }
           env_all = malloc(sizeof(char *) * (env_count + 1));
           for(int i=0;i<env_count;i++){
-            env_all[i]=malloc(sizeof(char) * (200 + 1));
+            env_all[i] = malloc(sizeof(char) * (200 + 1));
           }
           env_first_flag = 0;
         }else{
           //unset
-          // for(int i=0; i< env_count;i++){
-          //   unsetenv(env_all[i]);
-          // }
-          // for(int i=0; i< env_count;i++){
-          //   free(env_name[i]);
-          //   free(env_value[i]);
-          // }
-          // free(env_name);
-          // free(env_value);
+          for(int i = 0; i < env_count; i++) {
+            memset(env_all[i],'\0',sizeof(char) * (200 + 1));
+          }
         }
-        // Read all count
-        // env_name = malloc(sizeof(char *) * (env_count + 1));
-        // env_value = malloc(sizeof(char *) * (env_count + 1));
-        for(int i = 0; i < env_count; i++) {
-          // char env_name_len[10] = {'\0'};
-          // char env_name_tmp[200] = {'\0'};
-          // read(FORKSRV_FD, env_name_len, 10);
-          // int len = atoi(env_name_len);
-          // // env_name[i] = malloc(sizeof(char) * (len + 1));
-          // read(FORKSRV_FD,env_name_tmp,len);
-          // sprintf(env_name[i],"%s",env_name_tmp);
-
-          // char env_value_len[10] = {'\0'};
-          // char env_value_tmp[200] = {'\0'};
-          // read(FORKSRV_FD, env_value_len, 10);
-          // len = atoi(env_value_len);
-          // // env_value[i] = malloc(sizeof(char) * (len + 1));
-          // read(FORKSRV_FD,env_value_tmp,len);
-          // sprintf(env_value[i],"%s",env_value_tmp);
-          // // fp=fopen("/home/wulearn/Desktop/My-fuzz/test_target/test_env/ddd.txt","a+");
-          // // fprintf(fp,"[check malloc %d]:%p  %p\n",i,env_name[i],env_value[i]);
-          // // fclose(fp);
-          // // setenv(env_name_tmp,env_value_tmp,1);
-
+        // Read env index total
+        char env_index_tmp[10] = {'\0'};
+        read(FORKSRV_FD, env_index_tmp, 10);
+        int env_index = atoi(env_index_tmp);
+        for(int i = 0; i < env_index; i++) {
           char env_len[10] = {'\0'};
           char env_tmp[200] = {'\0'};
           read(FORKSRV_FD, env_len, 10);
           int len = atoi(env_len);
-          // env_name[i] = malloc(sizeof(char) * (len + 1));
           read(FORKSRV_FD,env_tmp,len);
           sprintf(env_all[i],"%s",env_tmp);
           env_all[i][len]='\0';
-          // FILE* fp=fopen("/home/wulearn/Desktop/My-fuzz/test_target/test_env/ddd.txt","a+");
-          // fprintf(fp,"[check %d]:%s\n",i,env_all[i]);
-          // fclose(fp);
         }
       }
       char argc_tmp[10] = {'\0'};

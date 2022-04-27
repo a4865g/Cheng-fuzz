@@ -9,6 +9,7 @@
 #define variable_array_size 30
 
 struct environment_list {
+    _Bool must;
     int count;
     char name[parameter_strings_long];   
     char environment[variable_array_size][parameter_strings_long];

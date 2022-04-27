@@ -1399,12 +1399,7 @@ fsrv_run_result_t afl_fsrv_run_target(afl_forkserver_t *fsrv, u32 timeout,
     RPFATAL(res, "Unable to request new process from fork server (OOM?)");
 
   }
-  // OKF("ARGC: %d\n",fsrv->pipe_argc);
-  // int aaa=0;
-  // while(aaa<fsrv->pipe_argc){
-  //   OKF("%d: %s\n",aaa,fsrv->argv[aaa]);
-  //   aaa++;
-  // }
+
   if(fsrv->run_target_flag == 0){
     write(fsrv->fsrv_ctl_fd,"1",1);
     char argc_tmp[10] = {'\0'};
@@ -1423,33 +1418,24 @@ fsrv_run_result_t afl_fsrv_run_target(afl_forkserver_t *fsrv, u32 timeout,
       if(fsrv->env_count != 0){
         write(fsrv->fsrv_ctl_fd,"2",1);
         if(fsrv->env_first_send == 1){
-          //send all env omg omg1 omg2
+          //send all env count
           char env_count_tmp[10] = {'\0'};
           sprintf(env_count_tmp, "%d", fsrv->env_count);
           write(fsrv->fsrv_ctl_fd, env_count_tmp, 10);
-          // for(int i=0;i<fsrv->env_count;i++){
-          //   char env_len[10] = {'\0'};
-          //   sprintf(env_len, "%d", (int)strlen(fsrv->env_all_name[i]));
-          //   write(fsrv->fsrv_ctl_fd, env_len, 10); //len
-          //   write(fsrv->fsrv_ctl_fd, fsrv->env_all_name[i], strlen(fsrv->env_all_name[i])); //env name
-          // }
           fsrv->env_first_send = 0;
         }
-        for(int i=0;i<fsrv->env_count;i++){
-          // char env_name_len[10] = {'\0'};
-          // sprintf(env_name_len, "%d", (int)strlen(fsrv->env_name[i]));
-          // write(fsrv->fsrv_ctl_fd, env_name_len, 10); //len
-          // write(fsrv->fsrv_ctl_fd, fsrv->env_name[i], strlen(fsrv->env_name[i])); //env_name
 
-          // char env_value_len[10] = {'\0'};
-          // sprintf(env_value_len, "%d", (int)strlen(fsrv->env_value[i]));
-          // write(fsrv->fsrv_ctl_fd, env_value_len, 10); //len
-          // write(fsrv->fsrv_ctl_fd, fsrv->env_value[i], strlen(fsrv->env_value[i])); //env_value
+        char env_index_tmp[10] = {'\0'};
+        sprintf(env_index_tmp, "%d", fsrv->env_index);
+        write(fsrv->fsrv_ctl_fd, env_index_tmp, 10);
+
+        for(int i=0;i<fsrv->env_index;i++){
           char env_len[10] = {'\0'};
-          sprintf(env_len, "%d", (int)strlen(fsrv->env_all_name[i]));
+          sprintf(env_len, "%d", (int)strlen(fsrv->env_all[i]));
           write(fsrv->fsrv_ctl_fd, env_len, 10); //len
-          write(fsrv->fsrv_ctl_fd, fsrv->env_all_name[i], strlen(fsrv->env_all_name[i])); //env_name
+          write(fsrv->fsrv_ctl_fd, fsrv->env_all[i], strlen(fsrv->env_all[i])); //env
         }
+
       }else{
         write(fsrv->fsrv_ctl_fd,"1",1);
       }

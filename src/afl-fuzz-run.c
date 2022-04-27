@@ -934,58 +934,14 @@ abort_trimming:
 
 }
 
-// void random_env(afl_state_t *afl){
-//   int i,pos;
-//   // OKF("%s",afl->tmp_cur_input_locate);
-//   memset(afl->env, 0, sizeof(char *) * (2 * parameter_strings_long + 1));
-//   FILE * f = fopen(afl->tmp_cur_input_locate, "rb");
-//   char* buf = 0;
-//   long length;
-//   if(f){
-//       fseek(f, 0, SEEK_END);
-//       length = ftell(f);
-//       fseek(f, 0, SEEK_SET);
-//       buf = malloc(length);
-//       if(buf){
-//         fread(buf, 1, length, f);
-//       }
-//       fclose(f);
-//   }
-
-//   for(i = 0 ; i < env_count ; i++){
-//     int ur = rand_below(afl, environment[i].count);
-//     char* result = strstr(environment[i].environment[ur], "@@");
-//     // OKF("ELE: %s",environment[i].environment[ur]);
-//     if(result){
-//       pos = result - environment[i].environment[ur];
-//       char tmp[parameter_strings_long], env_tmp[parameter_strings_long];
-//       memcpy(tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
-//       memcpy(env_tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
-//       strncpy(env_tmp, tmp,pos);
-//       env_tmp[pos] = '\0';
-//       strcat(env_tmp, buf);
-//       strcat(env_tmp, tmp + pos + 2);
-//       // OKF("SET: %s", env_tmp);
-//       setenv(environment[i].name, env_tmp, 1);
-//     }else{
-//       // OKF("SET: %s", environment[i].environment[ur]);
-//       setenv(environment[i].name, environment[i].environment[ur], 1);
-//     }
-
-//     afl->env[i] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur])) + 2);
-//     sprintf(afl->env[i],"%s=%s",environment[i].name, environment[i].environment[ur]);
-//     // OKF("THIS: %s: %s",environment[i].name,environment[i].environment[ur]);
-
-//   }
-// }
-
 void random_env(afl_state_t *afl){
-  int i,pos;
-  // OKF("%s",afl->tmp_cur_input_locate);
-  memset(afl->env, 0, sizeof(char *) * (env_count + 1));
+  int pos;
+  int env_index = 0;
+  char ** new_env = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
   FILE * f = fopen(afl->tmp_cur_input_locate, "rb");
   char* buf = 0;
   long length;
+
   if(f){
       fseek(f, 0, SEEK_END);
       length = ftell(f);
@@ -997,57 +953,38 @@ void random_env(afl_state_t *afl){
       fclose(f);
   }
 
-  for(i = 0 ; i < env_count ; i++){
-    int ur = rand_below(afl, environment[i].count);
-    char* result = strstr(environment[i].environment[ur], "@@");
-    // OKF("ELE: %s",environment[i].environment[ur]);
-    if(result){
-      pos = result - environment[i].environment[ur];
-      char tmp[strlen(environment[i].environment[ur])+1], env_tmp[strlen(environment[i].environment[ur])+strlen(buf)+1];
-      memcpy(tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
-      // memcpy(env_tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
-      strncpy(env_tmp, tmp,pos);
-      env_tmp[pos] = '\0';
-      strcat(env_tmp, buf);
-      strcat(env_tmp, tmp + pos + 2);
-      // OKF("SET: %s", env_tmp);
-      // setenv(environment[i].name, env_tmp, 1);
-      if(afl->fsrv.env_first_send==0){
-        ck_free(afl->env[i]);
-        ck_free(afl->fsrv.env_name[i]);
-        ck_free(afl->fsrv.env_value[i]);
-        ck_free(afl->fsrv.env_all_name[i]);
+  for(int i = 0 ; i < env_count ; i++){
+    if(environment[i].must || rand_below(afl, 2) != 0){
+      int ur = rand_below(afl, environment[i].count);
+      char* result = strstr(environment[i].environment[ur], "@@");
+      if(result){
+        pos = result - environment[i].environment[ur];
+        char tmp[strlen(environment[i].environment[ur])+1], env_tmp[strlen(environment[i].environment[ur])+strlen(buf)+1];
+        memcpy(tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
+        // memcpy(env_tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
+        strncpy(env_tmp, tmp,pos);
+        env_tmp[pos] = '\0';
+        strcat(env_tmp, buf);
+        strcat(env_tmp, tmp + pos + 2);
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(env_tmp) + 2));
+        sprintf(new_env[env_index],"%s=%s",environment[i].name, env_tmp);
+      }else{
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+        sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
       }
-      afl->env[i] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(env_tmp) + 2));
-      afl->fsrv.env_name[i] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + 1));
-      afl->fsrv.env_value[i] = (char *)ck_alloc(sizeof(char) * (strlen(env_tmp) + 1));
-      sprintf(afl->env[i],"%s=%s",environment[i].name, env_tmp);
-      afl->fsrv.env_all_name[i]=(char *)ck_alloc(sizeof(char) * (strlen(afl->env[i])+1));
-      sprintf(afl->fsrv.env_all_name[i],"%s",afl->env[i]);
-      sprintf(afl->fsrv.env_name[i],"%s",environment[i].name);
-      sprintf(afl->fsrv.env_value[i],"%s", environment[i].environment[ur]);
-    }else{
-      // OKF("SET: %s", environment[i].environment[ur]);
-      // setenv(environment[i].name, environment[i].environment[ur], 1);
-      if(afl->fsrv.env_first_send==0){
-        ck_free(afl->env[i]);
-        ck_free(afl->fsrv.env_name[i]);
-        ck_free(afl->fsrv.env_value[i]);
-        ck_free(afl->fsrv.env_all_name[i]);
-      }
-      afl->env[i] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
-      afl->fsrv.env_name[i] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + 1));
-      afl->fsrv.env_value[i] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].environment[ur]) + 1));
-      sprintf(afl->env[i],"%s=%s",environment[i].name, environment[i].environment[ur]);
-      afl->fsrv.env_all_name[i]=(char *)ck_alloc(sizeof(char) * (strlen(afl->env[i])+1));
-      sprintf(afl->fsrv.env_all_name[i],"%s",afl->env[i]);
-      sprintf(afl->fsrv.env_name[i],"%s",environment[i].name);
-      sprintf(afl->fsrv.env_value[i],"%s", environment[i].environment[ur]);
+      env_index++;
     }
-
-    // OKF("THIS: %s: %s",environment[i].name,environment[i].environment[ur]);
-
   }
+  new_env[env_index] = NULL;
+
+  for(int i=0;i<afl->fsrv.env_index;i++){
+    ck_free(afl->env[i]);
+  }
+  ck_free(afl->env);
+
+  afl->fsrv.env_index = env_index;
+  afl->env = new_env;
+  afl->fsrv.env_all = afl->env;
   free(buf);
 }
 
@@ -1073,7 +1010,7 @@ void random_argv(afl_state_t * afl) {
     argv_index++;
   }
   for (int i = 0 ; i < argv_count ; i++){
-    if(argument[i].must) {
+    if(argument[i].must || rand_below(afl, 2) != 0) {
       int ur = rand_below(afl, argument[i].count);
       char *substr = NULL;
       char  buf[parameter_strings_long];
@@ -1090,27 +1027,7 @@ void random_argv(afl_state_t * afl) {
 
         substr = strtok(NULL, " ");
       }
-
-    } else if (rand_below(afl, 2) != 0) // 1/2
-    {
-      int ur = rand_below(afl, argument[i].count);
-
-      char *substr = NULL;
-      char  buf[parameter_strings_long];
-      strcpy(buf, argument[i].argument[ur]);
-      substr = strtok(buf, " ");
-
-      while (substr != NULL) {
-        new_argv[argv_index] =
-            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
-        sprintf(new_argv[argv_index], "%s", substr);
-        new_argv[argv_index][strlen(substr)]='\0';
-        argv_index++;
-
-        substr = strtok(NULL, " ");
-      }
     }
-
   }
   new_argv[argv_index] = NULL;
   afl->fsrv.pipe_argc = argv_index;
@@ -1123,25 +1040,25 @@ void random_argv(afl_state_t * afl) {
   afl->fsrv.argv = afl->argv;
 }
 
-void afl_reset_fsrv(afl_state_t *afl) {
-  if (afl->fsrv.fsrv_pid > 0) {
-    kill(afl->fsrv.fsrv_pid, afl->fsrv.kill_signal);
-    if (waitpid(afl->fsrv.fsrv_pid, NULL, 0) <= 0) { WARNF("error waitpid\n"); }
-    afl->fsrv.fsrv_pid = 0;
-  }
-  if (afl->fsrv.child_pid > 0) {
-    kill(afl->fsrv.child_pid, afl->fsrv.kill_signal);
-    afl->fsrv.child_pid = 0;
-  }
-  if (!afl->no_forkserver && !afl->fsrv.fsrv_pid) {
-    close(afl->fsrv.fsrv_ctl_fd);
-    close(afl->fsrv.fsrv_st_fd);
-    be_quiet = 1;
-    afl_fsrv_start(&afl->fsrv, afl->argv, &afl->stop_soon,
-                   afl->afl_env.afl_debug_child);
-    be_quiet = 0;
-  }
-}
+// void afl_reset_fsrv(afl_state_t *afl) {
+//   if (afl->fsrv.fsrv_pid > 0) {
+//     kill(afl->fsrv.fsrv_pid, afl->fsrv.kill_signal);
+//     if (waitpid(afl->fsrv.fsrv_pid, NULL, 0) <= 0) { WARNF("error waitpid\n"); }
+//     afl->fsrv.fsrv_pid = 0;
+//   }
+//   if (afl->fsrv.child_pid > 0) {
+//     kill(afl->fsrv.child_pid, afl->fsrv.kill_signal);
+//     afl->fsrv.child_pid = 0;
+//   }
+//   if (!afl->no_forkserver && !afl->fsrv.fsrv_pid) {
+//     close(afl->fsrv.fsrv_ctl_fd);
+//     close(afl->fsrv.fsrv_st_fd);
+//     be_quiet = 1;
+//     afl_fsrv_start(&afl->fsrv, afl->argv, &afl->stop_soon,
+//                    afl->afl_env.afl_debug_child);
+//     be_quiet = 0;
+//   }
+// }
 
 /* Write a modified test case, run program, process results. Handle
    error conditions, returning 1 if it's time to bail out. This is
@@ -1162,14 +1079,6 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
     }
     // afl_reset_fsrv(afl);
   }
-  // for(int i=0;i<env_count;i++){
-  //   OKF("%s\n",afl->fsrv.env_value[i]);
-  // }
-  // char **now = afl->argv;
-  // while (*now) {
-  //   OKF("%s", *now);
-  //   now++;
-  // }
 
   afl->fsrv.run_target_flag = 1;
   fault = fuzz_run_target(afl, &afl->fsrv, afl->fsrv.exec_tmout);

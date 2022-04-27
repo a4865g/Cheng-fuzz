@@ -2,11 +2,19 @@
 
 static void parseEnvironment(xmlDocPtr doc, xmlNode *cur_node) {
   char *element;
+  char *must = NULL;
   if (env_count >= parameter_array_size) { exit(1); }
   while (cur_node != NULL) {
     if (environment[env_count].count >= variable_array_size) { exit(1); }
 
-    if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"ELEMENT"))) {
+    if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"MUST"))) {
+      must = ((char *)(xmlNodeListGetString(doc, cur_node->xmlChildrenNode, 1)));
+      if (strcmp("true", must) == 0) {
+        environment[env_count].must = 1;
+      } else if (strcmp("false", must) == 0) {
+        environment[env_count].must = 0;
+      }
+    } else if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"ELEMENT"))) {
         element = ((char *)(xmlNodeListGetString(doc, cur_node->xmlChildrenNode, 1)));
 
         if (strlen(element) < parameter_strings_long) {
@@ -16,7 +24,6 @@ static void parseEnvironment(xmlDocPtr doc, xmlNode *cur_node) {
         } else {
             exit(1);
         }
-
         environment[env_count].count++;
 
     } else if ((!xmlStrcmp(cur_node->name, (const xmlChar *)"NAME"))) {
