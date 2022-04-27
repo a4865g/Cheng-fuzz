@@ -2089,10 +2089,10 @@ int main(int argc, char **argv_orig, char **envp) {
       afl->fsrv.env_all_name = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
       afl->fsrv.env_name = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
       afl->fsrv.env_value = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
-      for(int i=0;i<env_count;i++){
-        afl->fsrv.env_all_name[i] = (char *)ck_alloc(sizeof(char ) * (strlen(environment[i].name) + 1));
-        sprintf(afl->fsrv.env_all_name[i],"%s",environment[i].name);
-      }
+      // for(int i=0;i<env_count;i++){
+      //   afl->fsrv.env_all_name[i] = (char *)ck_alloc(sizeof(char ) * (strlen(environment[i].name) + 1));
+      //   sprintf(afl->fsrv.env_all_name[i],"%s",environment[i].name);
+      // }
     }
     if(argv_count != 0 ){
       // char **init_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long*2));
