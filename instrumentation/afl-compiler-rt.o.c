@@ -908,6 +908,7 @@ static void __afl_start_snapshots(void) {
 int null_pos = -1;
 int env_first_flag = 1;
 int env_count = 0;
+int env_index = 0;
 char** env_all;
 char* null_content;
 void reset_argv_null(char** argv) {
@@ -1104,7 +1105,7 @@ static void __afl_start_forkserver(int *argc, char** argv) {
         // Read env index total
         char env_index_tmp[10] = {'\0'};
         read(FORKSRV_FD, env_index_tmp, 10);
-        int env_index = atoi(env_index_tmp);
+        env_index = atoi(env_index_tmp);
         for(int i = 0; i < env_index; i++) {
           char env_len[10] = {'\0'};
           char env_tmp[200] = {'\0'};
@@ -1161,9 +1162,11 @@ static void __afl_start_forkserver(int *argc, char** argv) {
       /* In child process: close fds, resume execution. */
 
       if (!child_pid) {
-        for(int i=0;i<env_count;i++){
-          // setenv(env_name[i],env_value[i],1);
-          putenv(env_all[i]);
+        if(mode[0] == '2'){
+            for(int i=0;i<env_index;i++){ //todo: INDEX
+            // setenv(env_name[i],env_value[i],1);
+              putenv(env_all[i]);
+          }
         }
         //(void)nice(-20);
 
