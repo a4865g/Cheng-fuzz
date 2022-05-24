@@ -1009,6 +1009,12 @@ void random_argv(afl_state_t * afl) {
     new_argv[argv_index][strlen(*(afl->argv + 2))]='\0';
     argv_index++;
   }
+  // char **now =afl->argv;
+  // while(*now){
+  //   OKF("%s",*now);
+  //   now++;
+  // }
+  
   for (int i = 0 ; i < argv_count ; i++){
     if(argument[i].must || rand_below(afl, 2) != 0) {
       int ur = rand_below(afl, argument[i].count);
@@ -1070,17 +1076,18 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
   u8 fault;
 
   write_to_testcase(afl, out_buf, len);
-  if(afl->env_fuzz_flag){
-    if(env_count != 0){
-      random_env(afl);
-    }
-    if(argv_count != 0){
-      random_argv(afl);
-    }
-    // afl_reset_fsrv(afl);
-  }
-
+  
+  // if(afl->env_fuzz_flag){
+  //   if(env_count != 0){
+  //     random_env(afl);
+  //   }
+  //   if(argv_count != 0){
+  //     random_argv(afl);
+  //   }
+  //   // afl_reset_fsrv(afl);
+  // }
   afl->fsrv.run_target_flag = 1;
+
   fault = fuzz_run_target(afl, &afl->fsrv, afl->fsrv.exec_tmout);
 
   if (afl->stop_soon) { return 1; }
@@ -1126,3 +1133,63 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
 
 }
 
+u8 __attribute__((hot))
+argv_common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
+
+  u8 fault;
+  
+  if(afl->env_fuzz_flag){
+    if(env_count != 0){
+      random_env(afl);
+    }
+    if(argv_count != 0){
+      random_argv(afl);
+    }
+    // afl_reset_fsrv(afl);
+  }
+  afl->fsrv.run_target_flag = 1;
+
+  fault = fuzz_run_target(afl, &afl->fsrv, afl->fsrv.exec_tmout);
+
+  if (afl->stop_soon) { return 1; }
+
+  if (fault == FSRV_RUN_TMOUT) {
+
+    if (afl->subseq_tmouts++ > TMOUT_LIMIT) {
+
+      ++afl->cur_skipped_items;
+      return 1;
+
+    }
+
+  } else {
+
+    afl->subseq_tmouts = 0;
+
+  }
+
+  /* Users can hit us with SIGUSR1 to request the current input
+     to be abandoned. */
+
+  if (afl->skip_requested) {
+
+    afl->skip_requested = 0;
+    ++afl->cur_skipped_items;
+    return 1;
+
+  }
+
+  /* This handles FAULT_ERROR for us: */
+
+  afl->queued_discovered += save_if_interesting(afl, out_buf, len, fault);
+
+  if (!(afl->stage_cur % afl->stats_update_freq) ||
+      afl->stage_cur + 1 == afl->stage_max) {
+
+    show_stats(afl);
+
+  }
+  
+  return 0;
+
+}

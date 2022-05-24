@@ -5604,3 +5604,63 @@ u8 fuzz_one(afl_state_t *afl) {
 
 }
 
+void argv_fuzz_one(afl_state_t *afl) {
+  u32    len;
+  s32    fd;
+  u8    *out_buf, *orig_in, *in_buf;
+  u64    orig_hit_cnt, new_hit_cnt = 0;
+  if (unlikely(afl->not_on_tty)) {
+
+    ACTF(
+        "Fuzzing test case #%u (%u total, %llu crashes saved, "
+        "perf_score=%0.0f, exec_us=%llu, hits=%u, map=%u, ascii=%u)...",
+        afl->current_entry, afl->queued_items, afl->saved_crashes,
+        afl->queue_cur->perf_score, afl->queue_cur->exec_us,
+        likely(afl->n_fuzz) ? afl->n_fuzz[afl->queue_cur->n_fuzz_entry] : 0,
+        afl->queue_cur->bitmap_size, afl->queue_cur->is_ascii);
+    fflush(stdout);
+
+  }
+
+  fd = open(afl->queue_cur->fname, O_RDONLY);
+  if (fd < 0) PFATAL("Unable to open '%s'", afl->queue_cur->fname);
+
+  len = afl->queue_cur->len;
+  in_buf = mmap(0, len, PROT_READ | PROT_WRITE, MAP_PRIVATE, fd, 0);
+  orig_in = in_buf;
+
+  out_buf = afl_realloc(AFL_BUF_PARAM(out), len);
+  if (unlikely(!out_buf)) { PFATAL("alloc"); }
+  if (orig_in == MAP_FAILED)
+    PFATAL("Unable to mmap '%s'", afl->queue_cur->fname);
+  close(fd);
+  
+  write_to_testcase(afl, out_buf, len);
+  memcpy(out_buf, in_buf, len);
+  // afl->subseq_tmouts = 0;
+
+  // afl->cur_depth = afl->queue_cur->depth;
+
+  afl->stage_short = "argv";
+  afl->stage_max = argv_count * argv_count;
+  orig_hit_cnt = afl->queued_items + afl->saved_crashes;
+  afl->stage_name = "argv generate";
+  for (afl->stage_cur = 0; afl->stage_cur < afl->stage_max; ++afl->stage_cur) {
+    if (argv_common_fuzz_stuff(afl, out_buf, len)) {
+      goto argv_abandon_entry;
+    }
+  }
+
+  new_hit_cnt = afl->queued_items + afl->saved_crashes;
+  afl->stage_finds[STAGE_ARGV_GEN] += new_hit_cnt - orig_hit_cnt;
+  afl->stage_cycles[STAGE_ARGV_GEN] += afl->stage_max;
+
+/* we are through with this queue entry - for this iteration */
+argv_abandon_entry:
+  // ++afl->queue_cur->fuzz_level;  //????
+  munmap(orig_in, afl->queue_cur->len);
+  // if (in_buf != orig_in) ck_free(in_buf);
+  // ck_free(out_buf);
+  // if (in_buf != orig_in) ck_free(in_buf);
+  // ck_free(out_buf);
+}

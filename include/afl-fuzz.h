@@ -239,6 +239,7 @@ enum {
   /* 18 */ STAGE_CUSTOM_MUTATOR,
   /* 19 */ STAGE_COLORIZATION,
   /* 20 */ STAGE_ITS,
+  /* 21 */ STAGE_ARGV_GEN,
 
   STAGE_NUM_MAX
 
@@ -1108,7 +1109,8 @@ void afl_reset_fsrv(afl_state_t *);
 /* WuLearn-fuzz */
 void detect_file_parm(afl_state_t *afl, u8 *prog_in, bool *use_stdin); // TODO
 void generate_arg(afl_state_t *, char **new_argv, char **argv, int argv_array[]);
-
+void random_init_argv(afl_state_t *);
+void random_all_argv(afl_state_t *);
 
 fsrv_run_result_t fuzz_run_target(afl_state_t *, afl_forkserver_t *fsrv, u32);
 void              write_to_testcase(afl_state_t *, void *, u32);
@@ -1116,6 +1118,7 @@ u8   calibrate_case(afl_state_t *, struct queue_entry *, u8 *, u32, u8);
 void sync_fuzzers(afl_state_t *);
 u8   trim_case(afl_state_t *, struct queue_entry *, u8 *);
 u8   common_fuzz_stuff(afl_state_t *, u8 *, u32);
+u8 argv_common_fuzz_stuff(afl_state_t *, u8 *, u32);
 
 /* Fuzz one */
 
@@ -1123,6 +1126,7 @@ u8   fuzz_one_original(afl_state_t *);
 u8   pilot_fuzzing(afl_state_t *);
 u8   core_fuzzing(afl_state_t *);
 void pso_updating(afl_state_t *);
+void argv_fuzz_one(afl_state_t *);
 u8   fuzz_one(afl_state_t *);
 
 /* Init */

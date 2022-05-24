@@ -557,6 +557,122 @@ void max_argv(afl_state_t *afl, char** argv, char*** init_argv) {
     (*init_argv)[199] = NULL;
 }
 
+void random_init_argv(afl_state_t * afl){
+  int argv_index = 0;
+  char ** new_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2));
+  new_argv[argv_index] =(char *)ck_alloc(sizeof(char) * strlen(*(afl->argv)) + 1);
+  sprintf(new_argv[argv_index], "%s", *(afl->argv));
+  new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
+  argv_index++;
+  // add qemu argv
+  if (afl->fsrv.qemu_mode) {
+    new_argv[argv_index] =
+        (char *)ck_alloc(sizeof(char) * strlen(*(afl->argv + 1)) + 1);
+    sprintf(new_argv[argv_index], "%s", *(afl->argv + 1));
+    new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
+    argv_index++;
+
+    new_argv[argv_index] =
+        (char *)ck_alloc(sizeof(char) * strlen(*(afl->argv + 2)) + 1);
+    sprintf(new_argv[argv_index], "%s", *(afl->argv + 2));
+    new_argv[argv_index][strlen(*(afl->argv + 2))]='\0';
+    argv_index++;
+  }
+  // char **now =afl->argv;
+  // while(*now){
+  //   OKF("%s",*now);
+  //   now++;
+  // }
+  
+  for (int i = 0 ; i < argv_count ; i++){
+    if(argument[i].must) {
+      int ur = rand_below(afl, argument[i].count);
+      char *substr = NULL;
+      char  buf[parameter_strings_long];
+
+      strcpy(buf, argument[i].argument[ur]);  // choose argument
+      substr = strtok(buf, " ");
+
+      while (substr != NULL) {
+        new_argv[argv_index] =
+            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
+        sprintf(new_argv[argv_index], "%s", substr);
+        new_argv[argv_index][strlen(substr)]='\0';
+        argv_index++;
+
+        substr = strtok(NULL, " ");
+      }
+    }
+  }
+  new_argv[argv_index] = NULL;
+  afl->fsrv.pipe_argc = argv_index;
+  for(int i=0;i<afl->argv_index;i++){
+    ck_free(afl->argv[i]);
+  }
+  ck_free(afl->argv);
+  afl->argv_index=argv_index;
+  afl->argv = new_argv; //replace
+  afl->fsrv.argv = afl->argv;
+}
+
+void random_all_argv(afl_state_t * afl){
+  int argv_index = 0;
+  char ** new_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2));
+  new_argv[argv_index] =(char *)ck_alloc(sizeof(char) * strlen(*(afl->argv)) + 1);
+  sprintf(new_argv[argv_index], "%s", *(afl->argv));
+  new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
+  argv_index++;
+  // add qemu argv
+  if (afl->fsrv.qemu_mode) {
+    new_argv[argv_index] =
+        (char *)ck_alloc(sizeof(char) * strlen(*(afl->argv + 1)) + 1);
+    sprintf(new_argv[argv_index], "%s", *(afl->argv + 1));
+    new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
+    argv_index++;
+
+    new_argv[argv_index] =
+        (char *)ck_alloc(sizeof(char) * strlen(*(afl->argv + 2)) + 1);
+    sprintf(new_argv[argv_index], "%s", *(afl->argv + 2));
+    new_argv[argv_index][strlen(*(afl->argv + 2))]='\0';
+    argv_index++;
+  }
+  // char **now =afl->argv;
+  // while(*now){
+  //   OKF("%s",*now);
+  //   now++;
+  // }
+  
+  for (int i = 0 ; i < argv_count ; i++){
+    if(argument[i].must || rand_below(afl, 2) != 0) {
+      int ur = rand_below(afl, argument[i].count);
+      char *substr = NULL;
+      char  buf[parameter_strings_long];
+
+      strcpy(buf, argument[i].argument[ur]);  // choose argument
+      substr = strtok(buf, " ");
+
+      while (substr != NULL) {
+        new_argv[argv_index] =
+            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
+        sprintf(new_argv[argv_index], "%s", substr);
+        new_argv[argv_index][strlen(substr)]='\0';
+        argv_index++;
+
+        substr = strtok(NULL, " ");
+      }
+    }
+  }
+  new_argv[argv_index] = NULL;
+  afl->fsrv.pipe_argc = argv_index;
+  for(int i=0;i<afl->argv_index;i++){
+    ck_free(afl->argv[i]);
+  }
+  ck_free(afl->argv);
+  afl->argv_index=argv_index;
+  afl->argv = new_argv; //replace
+  afl->fsrv.argv = afl->argv;
+}
+
 /* Main entry point */
 
 int main(int argc, char **argv_orig, char **envp) {
@@ -1903,13 +2019,12 @@ int main(int argc, char **argv_orig, char **envp) {
 
   setup_cmdline_file(afl, argv + optind);
 
-  int first_argv[parameter_array_size];
-  memset(first_argv, 0, sizeof(first_argv));
-  if (afl->env_fuzz_flag == 1) {
-    for (int i = 0; i < argv_count; i++) {
-      if (argument[i].must) { first_argv[i] = 1; }
-    }
-  }
+  // int must_argv=0;
+  // if (afl->env_fuzz_flag == 1) {
+  //   for (int i = 0; i < argv_count; i++) {
+  //     if (argument[i].must) { must_argv++; }
+  //   }
+  // }
 
   read_testcases(afl, NULL);
   // read_foreign_testcases(afl, 1); for the moment dont do this
@@ -2573,6 +2688,17 @@ int main(int argc, char **argv_orig, char **envp) {
 
       }
       
+      if(afl->env_fuzz_flag==1){
+        // argv_fuzz_one(afl);
+        // if(rand_below(afl, 2) != 0){
+        //   random_init_argv(afl);
+        // }
+        // else{
+        //   random_all_argv(afl);
+        // }
+        random_init_argv(afl);
+      }
+
       skipped_fuzz = fuzz_one(afl);
 
       if (unlikely(!afl->stop_soon && exit_1)) { afl->stop_soon = 2; }

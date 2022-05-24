@@ -1399,58 +1399,59 @@ fsrv_run_result_t afl_fsrv_run_target(afl_forkserver_t *fsrv, u32 timeout,
     RPFATAL(res, "Unable to request new process from fork server (OOM?)");
 
   }
-
-  if(fsrv->run_target_flag == 0){
-    write(fsrv->fsrv_ctl_fd,"1",1);
-    char argc_tmp[10] = {'\0'};
-      sprintf(argc_tmp, "%d", fsrv->pipe_argc);
-      write(fsrv->fsrv_ctl_fd, argc_tmp, 10);
-      for(int i = 0; i < fsrv->pipe_argc; i++) {
-        char argv_len[10] = {'\0'};
-        sprintf(argv_len, "%d", (int)strlen(fsrv->argv[i]));
-        write(fsrv->fsrv_ctl_fd, argv_len, 10); //len
-        write(fsrv->fsrv_ctl_fd, fsrv->argv[i], strlen(fsrv->argv[i])); //argv
-      }
-
-  }else{
-    if(fsrv->env_fuzz_flag == 1){
-
-      if(fsrv->env_count != 0){
-        write(fsrv->fsrv_ctl_fd,"2",1);
-        if(fsrv->env_first_send == 1){
-          //send all env count
-          char env_count_tmp[10] = {'\0'};
-          sprintf(env_count_tmp, "%d", fsrv->env_count);
-          write(fsrv->fsrv_ctl_fd, env_count_tmp, 10);
-          fsrv->env_first_send = 0;
-        }
-
-        char env_index_tmp[10] = {'\0'};
-        sprintf(env_index_tmp, "%d", fsrv->env_index);
-        write(fsrv->fsrv_ctl_fd, env_index_tmp, 10);
-
-        for(int i=0;i<fsrv->env_index;i++){
-          char env_len[10] = {'\0'};
-          sprintf(env_len, "%d", (int)strlen(fsrv->env_all[i]));
-          write(fsrv->fsrv_ctl_fd, env_len, 10); //len
-          write(fsrv->fsrv_ctl_fd, fsrv->env_all[i], strlen(fsrv->env_all[i])); //env
-        }
-
-      }else{
-        write(fsrv->fsrv_ctl_fd,"1",1);
-      }
+  if(fsrv->env_fuzz_flag == 1){
+    if(fsrv->run_target_flag == 0){
+      write(fsrv->fsrv_ctl_fd,"1",1);
       char argc_tmp[10] = {'\0'};
-      sprintf(argc_tmp, "%d", fsrv->pipe_argc);
-      write(fsrv->fsrv_ctl_fd, argc_tmp, 10);
-      for(int i = 0; i < fsrv->pipe_argc; i++) {
-        char argv_len[10] = {'\0'};
-        sprintf(argv_len, "%d", (int)strlen(fsrv->argv[i]));
-        write(fsrv->fsrv_ctl_fd, argv_len, 10); //len
-        write(fsrv->fsrv_ctl_fd, fsrv->argv[i], strlen(fsrv->argv[i])); //argv
-      }
+        sprintf(argc_tmp, "%d", fsrv->pipe_argc);
+        write(fsrv->fsrv_ctl_fd, argc_tmp, 10);
+        for(int i = 0; i < fsrv->pipe_argc; i++) {
+          char argv_len[10] = {'\0'};
+          sprintf(argv_len, "%d", (int)strlen(fsrv->argv[i]));
+          write(fsrv->fsrv_ctl_fd, argv_len, 10); //len
+          write(fsrv->fsrv_ctl_fd, fsrv->argv[i], strlen(fsrv->argv[i])); //argv
+        }
+
     }else{
-      write(fsrv->fsrv_ctl_fd,"0",1); //ori
-    } 
+      if(fsrv->env_fuzz_flag == 1){
+
+        if(fsrv->env_count != 0){
+          write(fsrv->fsrv_ctl_fd,"2",1);
+          if(fsrv->env_first_send == 1){
+            //send all env count
+            char env_count_tmp[10] = {'\0'};
+            sprintf(env_count_tmp, "%d", fsrv->env_count);
+            write(fsrv->fsrv_ctl_fd, env_count_tmp, 10);
+            fsrv->env_first_send = 0;
+          }
+
+          char env_index_tmp[10] = {'\0'};
+          sprintf(env_index_tmp, "%d", fsrv->env_index);
+          write(fsrv->fsrv_ctl_fd, env_index_tmp, 10);
+
+          for(int i=0;i<fsrv->env_index;i++){
+            char env_len[10] = {'\0'};
+            sprintf(env_len, "%d", (int)strlen(fsrv->env_all[i]));
+            write(fsrv->fsrv_ctl_fd, env_len, 10); //len
+            write(fsrv->fsrv_ctl_fd, fsrv->env_all[i], strlen(fsrv->env_all[i])); //env
+          }
+
+        }else{
+          write(fsrv->fsrv_ctl_fd,"1",1);
+        }
+        char argc_tmp[10] = {'\0'};
+        sprintf(argc_tmp, "%d", fsrv->pipe_argc);
+        write(fsrv->fsrv_ctl_fd, argc_tmp, 10);
+        for(int i = 0; i < fsrv->pipe_argc; i++) {
+          char argv_len[10] = {'\0'};
+          sprintf(argv_len, "%d", (int)strlen(fsrv->argv[i]));
+          write(fsrv->fsrv_ctl_fd, argv_len, 10); //len
+          write(fsrv->fsrv_ctl_fd, fsrv->argv[i], strlen(fsrv->argv[i])); //argv
+        }
+      }else{
+        write(fsrv->fsrv_ctl_fd,"0",1); //ori
+      }
+    }
   }
   
 

@@ -1130,6 +1130,8 @@ static void __afl_start_forkserver(int *argc, char** argv) {
       null_content = argv[pipe_argc];
       null_pos = pipe_argc;
       argv[pipe_argc] = NULL;
+
+      
     }
     /* If we stopped the child in persistent mode, but there was a race
        condition and afl-fuzz already issued SIGKILL, write off the old
