@@ -17,7 +17,7 @@ from qiling.const import QL_VERBOSE
 
 crash_info = ""
 env_name_list = []
-argc_value = 0
+argc_value = 1
 
 def change_argc(ql: Qiling):
     ql.reg.edi = argc_value
