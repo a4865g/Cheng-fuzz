@@ -124,8 +124,8 @@ def main(input_file, enable_trace = False):
 
     ql.env_addr = {}
     env_count = 0
-    for i in range(0, len(globals.data), 4):
-        env_name=globals.data[i]
+    for i in range(0, len(globals.env_data), 4):
+        env_name=globals.env_data[i]
         env_name_list.append(env_name)
         addr = ql.mem.search(env_name.encode()+("=").encode())
         ql.env_addr[env_count] = addr[0]
@@ -137,8 +137,8 @@ def main(input_file, enable_trace = False):
 
         for i in range(env_count):
             random.seed()
-            wrint_in_mem_l=(globals.data[4*i]).encode()+("=").encode()
-            choose_ele=globals.data[(4*i)+3][random.randint(0, globals.data[(4*i)+2]-1)]
+            wrint_in_mem_l=(globals.env_data[4*i]).encode()+("=").encode()
+            choose_ele=globals.env_data[(4*i)+3][random.randint(0, globals.env_data[(4*i)+2]-1)]
             wrint_in_mem_r=choose_ele.encode()
             change_index=choose_ele.find("@@")
             if i < env_count-1:
@@ -222,7 +222,7 @@ def main(input_file, enable_trace = False):
 
     if target_main_address != '-1' and argv_count != 0:
         ql.hook_address(callback = change_argc, address = ba + int(target_main_address, 16)) #<=main address
-    # ql.add_fs_mapper("/home/wulearn/Desktop/My-fuzz/test_target/test_env/debug.txt","/home/wulearn/Desktop/My-fuzz/test_target/test_env/debug.txt")
+    ql.add_fs_mapper("/home/wulearn/Desktop/My-fuzz/test_target/test_env/debug.txt","/home/wulearn/Desktop/My-fuzz/test_target/test_env/debug.txt")
     try:
         ql.run()
         os._exit(0)

@@ -8,7 +8,7 @@ import r2pipe
 
 def get_parser():
     parser = argparse.ArgumentParser(
-        description='Convert out_decompiler_XXX.txt to xml')
+        description = 'Convert out_decompiler_XXX.txt to xml')
     parser.add_argument('-i', '--input', type=str,
                         required=True, help='intput file')
     parser.add_argument('-o', '--output', type=str,
@@ -45,43 +45,86 @@ def parse_txt_getenv(input, output_dir):
     out_f = open(output_dir, 'w')
     out_f.write("<root>\n")
     for value in env_list:
-        out_f.write("  <PARAMETER>\n")
+        out_f.write("  <ENVIRONMENT>\n")
         out_f.write("    <NAME>"+value+"</NAME>\n")
-        out_f.write("    <MUST>"+"T"+"</MUST>\n")
+        out_f.write("    <MUST>"+"true"+"</MUST>\n")
         out_f.write("    <ELEMENT>"+"default"+"</ELEMENT>\n")
-        out_f.write("  </PARAMETER>\n")
+        out_f.write("  </ENVIRONMENT>\n")
     out_f.write("</root>\n")
     out_f.close()
     print("\nStored in "+output_dir+"\n\n")
+
+def store_main(output_dir):
+    input=globals.target_path
+    print("--- Parse main() function Address ---")
+    r2 = r2pipe.open(input,flags=["-e","bin.cache=true"])
+    r2.cmd("aa")
+    func_list = r2.cmd("afl")
+    print(func_list)
+    r2.quit()
+
+    def parse_main():
+        func = " ".join(func_list.splitlines())
+        func_num = func.split()
+        for i in range(0,len(func_num)):
+            if "main" in func_num[i]:
+                print("Got "+ func_num[i] + " In:\n")
+                for j in range(i,0,-1):
+                    if "0x" in func_num[j]:
+                        print(func_num[j] + "\n")
+                        return func_num[j]
+        print("Not got Stack_check_fail !!!\n")
+        return "-1"
+
+    store_data = parse_main()
+
+    if output_dir.rfind("/") != len(output_dir) - 1:
+        output_dir = output_dir + "/"
+    if input.rfind('.') == -1:
+        output_dir = output_dir + "parse_main_" + \
+            input[input.rfind('/')+1:]+".txt"
+    else:
+        output_dir = output_dir + "parse_main_" + \
+            input[input.rfind('/')+1:input.rfind('.')]+".txt"
+
+    out_f = open(output_dir, 'w')
+    out_f.write(store_data)
+    out_f.close()
+    print("--- End Parse ---\n")
+    print("Stored in "+output_dir)
 
 def store_stack(output_dir):
     input=globals.target_path
     print("--- Parse stack_check_fail ---")
     r2 = r2pipe.open(input,flags=["-e","bin.cache=true"])
     r2.cmd("aa")
-    cgi_func_list=r2.cmd("afl")
-    print(cgi_func_list)
+    func_list = r2.cmd("afl")
+    print(func_list)
     r2.quit()
 
     def parse_stack():
-        cgi_func = " ".join(cgi_func_list.splitlines())
-        cgi_func_num=cgi_func.split()
-        for i in range(0,len(cgi_func_num)):
-            if "stack_chk_fail" in cgi_func_num[i]:
-                print("Got "+ cgi_func_num[i] + " In:\n")
+        func = " ".join(func_list.splitlines())
+        func_num = func.split()
+        for i in range(0,len(func_num)):
+            if "stack_chk_fail" in func_num[i]:
+                print("Got "+ func_num[i] + " In:\n")
                 for j in range(i,0,-1):
-                    if "0x" in cgi_func_num[j]:
-                        print(cgi_func_num[j]+"\n")
-                        return cgi_func_num[j]
+                    if "0x" in func_num[j]:
+                        print(func_num[j] + "\n")
+                        return func_num[j]
         print("Not got Stack_check_fail !!!\n")
         return "-1"
 
-    store_data=parse_stack()
+    store_data = parse_stack()
 
     if output_dir.rfind("/") != len(output_dir)-1:
         output_dir = output_dir+"/"
-    output_dir = output_dir+"parse_stack_" + \
-        input[input.rfind('/')+1:input.rfind('.')]+".txt"
+    if input.rfind('.') == -1:
+        output_dir = output_dir + "parse_stack_" + \
+            input[input.rfind('/')+1:]+".txt"
+    else:
+        output_dir = output_dir + "parse_stack_" + \
+            input[input.rfind('/')+1:input.rfind('.')]+".txt"
 
     out_f = open(output_dir, 'w')
     out_f.write(store_data)
@@ -96,4 +139,5 @@ if __name__ == '__main__':
     parser = get_parser()
     args = parser.parse_args()
     parse_txt_getenv(str(args.input), str(args.output))
+    store_main(str(args.output))
     store_stack(str(args.output))
