@@ -941,7 +941,6 @@ void random_env(afl_state_t *afl){
   FILE * f = fopen(afl->tmp_cur_input_locate, "rb");
   char* buf = 0;
   long length;
-
   if(f){
       fseek(f, 0, SEEK_END);
       length = ftell(f);
@@ -958,16 +957,24 @@ void random_env(afl_state_t *afl){
       int ur = rand_below(afl, environment[i].count);
       char* result = strstr(environment[i].environment[ur], "@@");
       if(result){
-        pos = result - environment[i].environment[ur];
-        char tmp[strlen(environment[i].environment[ur])+1], env_tmp[strlen(environment[i].environment[ur])+strlen(buf)+1];
-        memcpy(tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
-        // memcpy(env_tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
-        strncpy(env_tmp, tmp,pos);
-        env_tmp[pos] = '\0';
-        strcat(env_tmp, buf);
-        strcat(env_tmp, tmp + pos + 2);
-        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(env_tmp) + 2));
-        sprintf(new_env[env_index],"%s=%s",environment[i].name, env_tmp);
+        if(strlen(buf)){
+          afl->env_has_fuzzing_flag = 1;
+          pos = result - environment[i].environment[ur];
+          char tmp[strlen(environment[i].environment[ur])];
+          char env_tmp[strlen(environment[i].environment[ur])+strlen(buf)+2];
+          strncpy(tmp,environment[i].environment[ur],strlen(environment[i].environment[ur]));
+          tmp[strlen(environment[i].environment[ur])]='\0';
+          // memcpy(env_tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
+          strncpy(env_tmp, tmp,pos);
+          env_tmp[pos] = '\0';
+          strcat(env_tmp, buf);
+          strcat(env_tmp, tmp + pos + 2);
+          new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(env_tmp) + 2));
+          sprintf(new_env[env_index],"%s=%s",environment[i].name, env_tmp);
+        }else{
+          new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+          sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
+        }
       }else{
         new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
         sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
@@ -976,12 +983,10 @@ void random_env(afl_state_t *afl){
     }
   }
   new_env[env_index] = NULL;
-
   for(int i=0;i<afl->fsrv.env_index;i++){
     ck_free(afl->env[i]);
   }
   ck_free(afl->env);
-
   afl->fsrv.env_index = env_index;
   afl->env = new_env;
   afl->fsrv.env_all = afl->env;
@@ -1014,27 +1019,29 @@ void random_argv(afl_state_t * afl) {
   //   OKF("%s",*now);
   //   now++;
   // }
-  
-  for (int i = 0 ; i < argv_count ; i++){
-    if(argument[i].must || rand_below(afl, 2) != 0) {
-      int ur = rand_below(afl, argument[i].count);
-      char *substr = NULL;
-      char  buf[parameter_strings_long];
+  if(argv_count != 1){
+    for (int i = 0 ; i < argv_count ; i++){
+      if(argument[i].must || rand_below(afl, 2) != 0) {
+        int ur = rand_below(afl, argument[i].count);
+        char *substr = NULL;
+        char  buf[parameter_strings_long];
 
-      strcpy(buf, argument[i].argument[ur]);  // choose argument
-      substr = strtok(buf, " ");
+        strcpy(buf, argument[i].argument[ur]);  // choose argument
+        substr = strtok(buf, " ");
 
-      while (substr != NULL) {
-        new_argv[argv_index] =
-            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
-        sprintf(new_argv[argv_index], "%s", substr);
-        new_argv[argv_index][strlen(substr)]='\0';
-        argv_index++;
+        while (substr != NULL) {
+          new_argv[argv_index] =
+              (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
+          sprintf(new_argv[argv_index], "%s", substr);
+          new_argv[argv_index][strlen(substr)]='\0';
+          argv_index++;
 
-        substr = strtok(NULL, " ");
+          substr = strtok(NULL, " ");
+        }
       }
     }
   }
+  
   new_argv[argv_index] = NULL;
   afl->fsrv.pipe_argc = argv_index;
   for(int i=0;i<afl->argv_index;i++){
@@ -1076,18 +1083,58 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
   u8 fault;
 
   write_to_testcase(afl, out_buf, len);
-  
-  // if(afl->env_fuzz_flag){
-  //   if(env_count != 0){
-  //     random_env(afl);
-  //   }
-  //   if(argv_count != 0){
-  //     random_argv(afl);
-  //   }
-  //   // afl_reset_fsrv(afl);
-  // }
-  afl->fsrv.run_target_flag = 1;
 
+  // if(afl->env_has_fuzzing_flag == 1){
+  //   random_env(afl);
+  // }
+
+  int i=0;
+  if(afl->env_fuzz_flag){
+    if(strcmp(afl->env_fuzz_loc,"VVuLeArn")!=0){
+      FILE * f = fopen(afl->tmp_cur_input_locate, "rb");
+      char* buf = 0;
+      int pos;
+      long length;
+      if(f){
+        fseek(f, 0, SEEK_END);
+        length = ftell(f);
+        fseek(f, 0, SEEK_SET);
+        buf = malloc(length);
+        if(buf){
+          fread(buf, 1, length, f);
+        }
+        fclose(f);
+      }
+      while(*afl->env){
+        if(strcmp(*afl->env,afl->env_fuzz_loc)==0){
+          char* result = strstr(*afl->env, "@@");
+          if(result){
+            if(strlen(buf)){
+              pos = result - *afl->env;
+              char tmp[strlen(*afl->env)];
+              char env_tmp[strlen(*afl->env)+strlen(buf)+2];
+              strncpy(tmp,*afl->env,strlen(*afl->env));
+              tmp[strlen(*afl->env)]='\0';
+              // memcpy(env_tmp, environment[i].environment[ur], sizeof(environment[i].environment[ur]));
+              strncpy(env_tmp, tmp,pos);
+              env_tmp[pos] = '\0';
+              strcat(env_tmp, buf);
+              strcat(env_tmp, tmp + pos + 2);
+              strcpy(*afl->env,env_tmp);
+            }
+          }
+        }
+        *afl->env++;
+        i++;
+      }
+    }
+    // afl_reset_fsrv(afl);
+  }
+  while(i>0){
+    *afl->env--;
+    i--;
+  }
+  afl->fsrv.run_target_flag = 1;
   fault = fuzz_run_target(afl, &afl->fsrv, afl->fsrv.exec_tmout);
 
   if (afl->stop_soon) { return 1; }
@@ -1139,18 +1186,17 @@ argv_common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
   u8 fault;
   
   if(afl->env_fuzz_flag){
-    if(env_count != 0){
       random_env(afl);
-    }
-    if(argv_count != 0){
       random_argv(afl);
-    }
     // afl_reset_fsrv(afl);
   }
+  // char **now=afl->env;
+  // while(*now){
+  //   OKF("%s",*now);
+  //   *now++;
+  // }
   afl->fsrv.run_target_flag = 1;
-
   fault = fuzz_run_target(afl, &afl->fsrv, afl->fsrv.exec_tmout);
-
   if (afl->stop_soon) { return 1; }
 
   if (fault == FSRV_RUN_TMOUT) {

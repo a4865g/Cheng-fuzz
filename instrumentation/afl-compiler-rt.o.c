@@ -1079,50 +1079,58 @@ static void __afl_start_forkserver(int *argc, char** argv) {
     }
 
 #endif
+    //int fd = open("/home/wulearn/Desktop/tmp", O_WRONLY | O_APPEND);
     if(null_pos != -1){
       reset_argv_null(argv);
     }
     char mode[1];
     read(FORKSRV_FD, mode, 1);
+    //dprintf(fd, "mode: %s \n", mode);
     if(mode[0] != '0'){
       if(mode[0] == '2'){
         if(env_first_flag == 1){
           //get all env
           char env_tmp[10] = {'\0'};
           read(FORKSRV_FD, env_tmp, 10);
+          //dprintf(fd, "env_tmp: %s \n", env_tmp);
           env_count = atoi(env_tmp);
           env_all = malloc(sizeof(char *) * (env_count + 1));
           for(int i=0;i<env_count;i++){
-            env_all[i] = malloc(sizeof(char) * (200 + 1));
+            env_all[i] = malloc(sizeof(char) * (10000 + 1));
           }
           env_first_flag = 0;
         }else{
           //unset
           for(int i = 0; i < env_count; i++) {
-            memset(env_all[i],'\0',sizeof(char) * (200 + 1));
+            memset(env_all[i],'\0',sizeof(char) * (10000 + 1));
           }
         }
         // Read env index total
         char env_index_tmp[10] = {'\0'};
         read(FORKSRV_FD, env_index_tmp, 10);
+        //dprintf(fd, "env_index_tmp: %s \n", env_index_tmp);
         env_index = atoi(env_index_tmp);
         for(int i = 0; i < env_index; i++) {
           char env_len[10] = {'\0'};
           char env_tmp[200] = {'\0'};
           read(FORKSRV_FD, env_len, 10);
+          //dprintf(fd, "env_len: %s \n", env_len);
           int len = atoi(env_len);
           read(FORKSRV_FD,env_tmp,len);
+          //dprintf(fd, "env_tmp: %s \n", env_tmp);
           sprintf(env_all[i],"%s",env_tmp);
           env_all[i][len]='\0';
         }
       }
       char argc_tmp[10] = {'\0'};
       read(FORKSRV_FD, argc_tmp, 10);
+      //dprintf(fd, "argc_tmp: %s \n", argc_tmp);
       pipe_argc = atoi(argc_tmp);
       for(int i = 0; i < pipe_argc; i++) {
           char argv_len[10] = {'\0'};
           char argv_tmp[200] = {'\0'};
           read(FORKSRV_FD, argv_len, 10);
+          //dprintf(fd, "argv_len: %s \n", argv_len);
           int len = atoi(argv_len);
           while(read(FORKSRV_FD, argv_tmp, len) == 0);
           sprintf(argv[i], "%s", argv_tmp);
@@ -1133,6 +1141,7 @@ static void __afl_start_forkserver(int *argc, char** argv) {
 
       
     }
+    //close(fd);
     /* If we stopped the child in persistent mode, but there was a race
        condition and afl-fuzz already issued SIGKILL, write off the old
        process. */

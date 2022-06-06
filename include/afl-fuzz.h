@@ -414,6 +414,7 @@ struct foreign_sync {
 };
 
 typedef struct afl_state {
+  u8 env_has_fuzzing_flag;
   char** now;
   int argv_index;
   /* ENV */
@@ -421,6 +422,7 @@ typedef struct afl_state {
   char *xml_position;
   int env_cnt;
   char **env;
+  char *env_fuzz_loc;
   u8 *tmp_cur_input_locate;
 
   /* Position of this state in the global states list */

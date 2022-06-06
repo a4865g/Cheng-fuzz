@@ -5640,9 +5640,12 @@ void argv_fuzz_one(afl_state_t *afl) {
   // afl->subseq_tmouts = 0;
 
   // afl->cur_depth = afl->queue_cur->depth;
-
   afl->stage_short = "argv";
-  afl->stage_max = argv_count * argv_count;
+  if(argv_count==1){
+    afl->stage_max = env_count * env_count;
+  }else{
+    afl->stage_max = argv_count * argv_count;
+  }
   orig_hit_cnt = afl->queued_items + afl->saved_crashes;
   afl->stage_name = "argv generate";
   for (afl->stage_cur = 0; afl->stage_cur < afl->stage_max; ++afl->stage_cur) {
@@ -5650,6 +5653,7 @@ void argv_fuzz_one(afl_state_t *afl) {
       goto argv_abandon_entry;
     }
   }
+  
 
   new_hit_cnt = afl->queued_items + afl->saved_crashes;
   afl->stage_finds[STAGE_ARGV_GEN] += new_hit_cnt - orig_hit_cnt;

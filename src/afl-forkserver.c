@@ -1414,7 +1414,6 @@ fsrv_run_result_t afl_fsrv_run_target(afl_forkserver_t *fsrv, u32 timeout,
 
     }else{
       if(fsrv->env_fuzz_flag == 1){
-
         if(fsrv->env_count != 0){
           write(fsrv->fsrv_ctl_fd,"2",1);
           if(fsrv->env_first_send == 1){

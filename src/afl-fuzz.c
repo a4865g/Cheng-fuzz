@@ -511,28 +511,30 @@ void generate_arg(afl_state_t *afl, char **new_argv, char **argv,
       argv_index++;
     }
   }
+  if(argv_count == 1){
+    for (int i = 0; i < argv_count; i++) {
+      if (argv_array[i] != 0) {
+        char *substr = NULL;
+        char  buf[parameter_strings_long];
 
-  for (int i = 0; i < argv_count; i++) {
-    if (argv_array[i] != 0) {
-      char *substr = NULL;
-      char  buf[parameter_strings_long];
+        strcpy(buf,
+              argument[i]
+                  .argument[argv_array[i] - 1]);  // choose argument[]
+        substr = strtok(buf, " ");
 
-      strcpy(buf,
-             argument[i]
-                 .argument[argv_array[i] - 1]);  // choose argument[]
-      substr = strtok(buf, " ");
+        while (substr != NULL) {
+          new_argv[argv_index] =
+              (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
+          sprintf(new_argv[argv_index], "%s", substr);
+          new_argv[argv_index][strlen(substr)]='\0';
+          argv_index++;
 
-      while (substr != NULL) {
-        new_argv[argv_index] =
-            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
-        sprintf(new_argv[argv_index], "%s", substr);
-        new_argv[argv_index][strlen(substr)]='\0';
-        argv_index++;
-
-        substr = strtok(NULL, " ");
+          substr = strtok(NULL, " ");
+        }
       }
     }
   }
+  
   new_argv[argv_index + 1] = NULL;
   afl->fsrv.pipe_argc=argv_index;
   afl->argv_index=argv_index;
@@ -560,6 +562,11 @@ void max_argv(afl_state_t *afl, char** argv, char*** init_argv) {
 void random_init_argv(afl_state_t * afl){
   int argv_index = 0;
   char ** new_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2));
+  
+  int pos;
+  int env_index = 0;
+  char ** new_env = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+
   new_argv[argv_index] =(char *)ck_alloc(sizeof(char) * strlen(*(afl->argv)) + 1);
   sprintf(new_argv[argv_index], "%s", *(afl->argv));
   new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
@@ -583,25 +590,43 @@ void random_init_argv(afl_state_t * afl){
   //   OKF("%s",*now);
   //   now++;
   // }
-  
-  for (int i = 0 ; i < argv_count ; i++){
-    if(argument[i].must) {
-      int ur = rand_below(afl, argument[i].count);
-      char *substr = NULL;
-      char  buf[parameter_strings_long];
 
-      strcpy(buf, argument[i].argument[ur]);  // choose argument
-      substr = strtok(buf, " ");
+  if(argv_count != 1){
+    for (int i = 0 ; i < argv_count ; i++){
+      if(argument[i].must) {
+        int ur = rand_below(afl, argument[i].count);
+        char *substr = NULL;
+        char  buf[parameter_strings_long];
 
-      while (substr != NULL) {
-        new_argv[argv_index] =
-            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
-        sprintf(new_argv[argv_index], "%s", substr);
-        new_argv[argv_index][strlen(substr)]='\0';
-        argv_index++;
+        strcpy(buf, argument[i].argument[ur]);  // choose argument
+        substr = strtok(buf, " ");
 
-        substr = strtok(NULL, " ");
+        while (substr != NULL) {
+          new_argv[argv_index] =
+              (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
+          sprintf(new_argv[argv_index], "%s", substr);
+          new_argv[argv_index][strlen(substr)]='\0';
+          argv_index++;
+
+          substr = strtok(NULL, " ");
+        }
       }
+    }
+  }
+
+  for(int i = 0 ; i < env_count ; i++){
+    if(environment[i].must){
+      int ur = rand_below(afl, environment[i].count);
+      char* result = strstr(environment[i].environment[ur], "@@");
+      if(result){
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2+10000));
+        sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
+        strcpy(afl->env_fuzz_loc,new_env[env_index]);
+      }else{
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+        sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
+      }
+      env_index++;
     }
   }
   new_argv[argv_index] = NULL;
@@ -613,11 +638,25 @@ void random_init_argv(afl_state_t * afl){
   afl->argv_index=argv_index;
   afl->argv = new_argv; //replace
   afl->fsrv.argv = afl->argv;
+
+  new_env[env_index] = NULL;
+  for(int i=0;i<afl->fsrv.env_index;i++){
+    ck_free(afl->env[i]);
+  }
+  ck_free(afl->env);
+  afl->fsrv.env_index = env_index;
+  afl->env = new_env;
+  afl->fsrv.env_all = afl->env;
 }
 
 void random_all_argv(afl_state_t * afl){
   int argv_index = 0;
   char ** new_argv = (char **)ck_alloc(sizeof(char *) * (parameter_strings_long * 2));
+  
+  int pos;
+  int env_index = 0;
+  char ** new_env = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+  
   new_argv[argv_index] =(char *)ck_alloc(sizeof(char) * strlen(*(afl->argv)) + 1);
   sprintf(new_argv[argv_index], "%s", *(afl->argv));
   new_argv[argv_index][strlen(new_argv[argv_index])]='\0';
@@ -641,25 +680,43 @@ void random_all_argv(afl_state_t * afl){
   //   OKF("%s",*now);
   //   now++;
   // }
-  
-  for (int i = 0 ; i < argv_count ; i++){
-    if(argument[i].must || rand_below(afl, 2) != 0) {
-      int ur = rand_below(afl, argument[i].count);
-      char *substr = NULL;
-      char  buf[parameter_strings_long];
 
-      strcpy(buf, argument[i].argument[ur]);  // choose argument
-      substr = strtok(buf, " ");
+  if(argv_count != 1){
+    for (int i = 0 ; i < argv_count ; i++){
+      if(argument[i].must || rand_below(afl, 2) != 0) {
+        int ur = rand_below(afl, argument[i].count);
+        char *substr = NULL;
+        char  buf[parameter_strings_long];
 
-      while (substr != NULL) {
-        new_argv[argv_index] =
-            (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
-        sprintf(new_argv[argv_index], "%s", substr);
-        new_argv[argv_index][strlen(substr)]='\0';
-        argv_index++;
+        strcpy(buf, argument[i].argument[ur]);  // choose argument
+        substr = strtok(buf, " ");
 
-        substr = strtok(NULL, " ");
+        while (substr != NULL) {
+          new_argv[argv_index] =
+              (char *)ck_alloc(sizeof(char) * strlen(substr) + 1);
+          sprintf(new_argv[argv_index], "%s", substr);
+          new_argv[argv_index][strlen(substr)]='\0';
+          argv_index++;
+
+          substr = strtok(NULL, " ");
+        }
       }
+    }
+  }
+
+  for(int i = 0 ; i < env_count ; i++){
+    if(environment[i].must){
+      int ur = rand_below(afl, environment[i].count);
+      char* result = strstr(environment[i].environment[ur], "@@");
+      if(result){
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2+10000));
+        sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
+        strcpy(afl->env_fuzz_loc,new_env[env_index]);
+      }else{
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+        sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
+      }
+      env_index++;
     }
   }
   new_argv[argv_index] = NULL;
@@ -671,6 +728,15 @@ void random_all_argv(afl_state_t * afl){
   afl->argv_index=argv_index;
   afl->argv = new_argv; //replace
   afl->fsrv.argv = afl->argv;
+
+  new_env[env_index] = NULL;
+  for(int i=0;i<afl->fsrv.env_index;i++){
+    ck_free(afl->env[i]);
+  }
+  ck_free(afl->env);
+  afl->fsrv.env_index = env_index;
+  afl->env = new_env;
+  afl->fsrv.env_all = afl->env;
 }
 
 /* Main entry point */
@@ -713,8 +779,10 @@ int main(int argc, char **argv_orig, char **envp) {
 
   afl->env_cnt = 0;
   afl->env_fuzz_flag = 0;
+  afl->env_has_fuzzing_flag = 0;
   afl->fsrv.env_fuzz_flag = 0;
   afl->fsrv.run_target_flag = 0;
+  
   afl_state_init(afl, map_size);
   afl->debug = debug;
   afl_fsrv_init(&afl->fsrv);
@@ -2689,18 +2757,23 @@ int main(int argc, char **argv_orig, char **envp) {
       }
       
       if(afl->env_fuzz_flag==1){
-        // argv_fuzz_one(afl);
-        // if(rand_below(afl, 2) != 0){
-        //   random_init_argv(afl);
-        // }
-        // else{
-        //   random_all_argv(afl);
-        // }
-        random_init_argv(afl);
+        afl->env_fuzz_loc = (char *)ck_alloc(sizeof(char) * (parameter_strings_long + 1));
+        strcpy(afl->env_fuzz_loc,"VVuLeArn");
+        argv_fuzz_one(afl);
+        if(rand_below(afl, 2) != 0){
+          random_init_argv(afl);
+        }
+
+        else{
+          random_all_argv(afl);
+        }
+        // random_init_argv(afl);
       }
-
+      char ** tt=afl->env;
       skipped_fuzz = fuzz_one(afl);
-
+      if(afl->env_fuzz_flag==1){
+        free(afl->env_fuzz_loc);
+      }
       if (unlikely(!afl->stop_soon && exit_1)) { afl->stop_soon = 2; }
 
       if (unlikely(afl->old_seed_selection)) {
