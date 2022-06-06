@@ -1127,6 +1127,7 @@ common_fuzz_stuff(afl_state_t *afl, u8 *out_buf, u32 len) {
         *afl->env++;
         i++;
       }
+      free(buf);
     }
     // afl_reset_fsrv(afl);
   }
