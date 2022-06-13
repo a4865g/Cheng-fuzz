@@ -619,15 +619,19 @@ void random_init_argv(afl_state_t * afl){
       int ur = rand_below(afl, environment[i].count);
       char* result = strstr(environment[i].environment[ur], "@@");
       if(result){
-        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2+10000));
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (15000));
         sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
         strcpy(afl->env_fuzz_loc,new_env[env_index]);
       }else{
-        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 3));
         sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
       }
-      env_index++;
+      
+    }else{
+      new_env[env_index] = (char *)ck_alloc(sizeof(char) * (1));
+      sprintf(new_env[env_index],"\0");
     }
+    env_index++;
   }
   new_argv[argv_index] = NULL;
   afl->fsrv.pipe_argc = argv_index;
@@ -709,15 +713,18 @@ void random_all_argv(afl_state_t * afl){
       int ur = rand_below(afl, environment[i].count);
       char* result = strstr(environment[i].environment[ur], "@@");
       if(result){
-        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2+10000));
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (15000));
         sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
         strcpy(afl->env_fuzz_loc,new_env[env_index]);
       }else{
-        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 3));
         sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
       }
-      env_index++;
+    }else{
+      new_env[env_index] = (char *)ck_alloc(sizeof(char) * (1));
+      sprintf(new_env[env_index],"\0");
     }
+    env_index++;
   }
   new_argv[argv_index] = NULL;
   afl->fsrv.pipe_argc = argv_index;
@@ -737,6 +744,16 @@ void random_all_argv(afl_state_t * afl){
   afl->fsrv.env_index = env_index;
   afl->env = new_env;
   afl->fsrv.env_all = afl->env;
+}
+
+
+int find_env_locate() {
+  for(int i = 0;i < env_count ; i++){
+    if(strstr(environment[i].environment[0], "@@")){
+      return i;
+    }
+  }
+  return -1;
 }
 
 /* Main entry point */
@@ -1534,6 +1551,7 @@ int main(int argc, char **argv_orig, char **envp) {
           afl->fsrv.env_fuzz_flag = 1;
           afl->fsrv.argv_count = argv_count;
           afl->fsrv.env_count = env_count;
+          afl->fsrv.send_env_fuzzing_loc = find_env_locate(); //check @@ in env
         } else {
           FATAL("File doesn't exist!");
         }
@@ -2269,7 +2287,7 @@ int main(int argc, char **argv_orig, char **envp) {
       afl->fsrv.env_first_send = 1;
       afl->fsrv.env_index = 0;
       // afl->env = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
-      afl->fsrv.env_all = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
+      // afl->fsrv.env_all = (char **)ck_alloc(sizeof(char *) * (env_count + 1));
     }
     if(argv_count != 0 ){
       char **init_argv;
@@ -2769,7 +2787,6 @@ int main(int argc, char **argv_orig, char **envp) {
         }
         // random_init_argv(afl);
       }
-      char ** tt=afl->env;
       skipped_fuzz = fuzz_one(afl);
       if(afl->env_fuzz_flag==1){
         free(afl->env_fuzz_loc);

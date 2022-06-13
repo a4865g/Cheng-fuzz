@@ -1421,6 +1421,10 @@ fsrv_run_result_t afl_fsrv_run_target(afl_forkserver_t *fsrv, u32 timeout,
             char env_count_tmp[10] = {'\0'};
             sprintf(env_count_tmp, "%d", fsrv->env_count);
             write(fsrv->fsrv_ctl_fd, env_count_tmp, 10);
+            //send @@ location
+            char env_loc_tmp[10] = {'\0'};
+            sprintf(env_loc_tmp, "%d", fsrv->send_env_fuzzing_loc);
+            write(fsrv->fsrv_ctl_fd, env_loc_tmp, 10);
             fsrv->env_first_send = 0;
           }
 

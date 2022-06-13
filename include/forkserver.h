@@ -176,6 +176,7 @@ typedef struct afl_forkserver {
   int argv_count;
   int env_count;
   int env_first_send;
+  int send_env_fuzzing_loc;
 } afl_forkserver_t;
 
 typedef enum fsrv_run_result {

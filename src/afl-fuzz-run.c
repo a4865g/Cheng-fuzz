@@ -969,18 +969,22 @@ void random_env(afl_state_t *afl){
           env_tmp[pos] = '\0';
           strcat(env_tmp, buf);
           strcat(env_tmp, tmp + pos + 2);
-          new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(env_tmp) + 2));
+          //new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(env_tmp) + 3));
+          new_env[env_index] = (char *)ck_alloc(sizeof(char) * (15000));
           sprintf(new_env[env_index],"%s=%s",environment[i].name, env_tmp);
         }else{
-          new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+          new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 3));
           sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
         }
       }else{
-        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 2));
+        new_env[env_index] = (char *)ck_alloc(sizeof(char) * (strlen(environment[i].name) + strlen(environment[i].environment[ur]) + 3));
         sprintf(new_env[env_index],"%s=%s",environment[i].name, environment[i].environment[ur]);
       }
-      env_index++;
+    }else{
+      new_env[env_index] = (char *)ck_alloc(sizeof(char) * (1));
+      sprintf(new_env[env_index],"\0");
     }
+    env_index++;
   }
   new_env[env_index] = NULL;
   for(int i=0;i<afl->fsrv.env_index;i++){
