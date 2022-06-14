@@ -5,7 +5,7 @@
 #include <string.h>
 
 #define parameter_array_size 300
-#define parameter_strings_long 700
+#define parameter_strings_long 1000
 #define variable_array_size 30
 
 struct environment_list {
