@@ -1099,14 +1099,14 @@ static void __afl_start_forkserver(int *argc, char** argv) {
           env_loc = atoi(env_loc_tmp);
           if(env_loc == -1){
             for(int i=0;i<env_count;i++){
-              env_all[i] = malloc(sizeof(char) * (1000 + 1));
+              env_all[i] = malloc(sizeof(char) * (15000 + 1));
             }
           }else{
             for(int i=0;i<env_count;i++){
               if(i==env_loc){
                 env_all[i] = malloc(sizeof(char) * (15000 + 1));
               }else{
-                env_all[i] = malloc(sizeof(char) * (1000 + 1));
+                env_all[i] = malloc(sizeof(char) * (15000 + 1));
               }
             }
           }
@@ -1116,14 +1116,14 @@ static void __afl_start_forkserver(int *argc, char** argv) {
           //unset
           if(env_loc == -1){
             for(int i=0;i<env_count;i++){
-              memset(env_all[i],'\0',sizeof(char) * (1000 + 1));
+              memset(env_all[i],'\0',sizeof(char) * (15000 + 1));
             }
           }else{
             for(int i=0;i<env_count;i++){
               if(i==env_loc){
                 memset(env_all[i],'\0',sizeof(char) * (15000 + 1));
               }else{
-                memset(env_all[i],'\0',sizeof(char) * (1000 + 1));
+                memset(env_all[i],'\0',sizeof(char) * (15000 + 1));
               }
             }
           }
