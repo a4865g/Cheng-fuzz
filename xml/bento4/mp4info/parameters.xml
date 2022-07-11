@@ -1,0 +1,31 @@
+<root>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--verbose</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--format json</ELEMENT>
+    <ELEMENT>--format text</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--show-layout</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--show-samples</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--show-sample-data</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--fast</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>@@</ELEMENT>
+  </ARGUMENT>
+</root>

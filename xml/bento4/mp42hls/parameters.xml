@@ -1,0 +1,30 @@
+<root>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--verbose</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--show-info</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--audio-format ts</ELEMENT>
+    <ELEMENT>--audio-format packed</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--encryption-mode AES-128</ELEMENT>
+    <ELEMENT>--encryption-mode SAMPLE-AES</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--encryption-iv-mode sequence</ELEMENT>
+    <ELEMENT>--encryption-iv-mode random</ELEMENT>
+    <ELEMENT>--encryption-iv-mode fps</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>@@</ELEMENT>
+  </ARGUMENT>
+</root>

@@ -1,0 +1,246 @@
+<root>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>@@</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-alpha Activate</ELEMENT>
+    <ELEMENT>-alpha Associate</ELEMENT>
+    <ELEMENT>-alpha Deactivate</ELEMENT>
+    <ELEMENT>-alpha Disassociate</ELEMENT>
+    <ELEMENT>-alpha Set</ELEMENT>
+    <ELEMENT>-alpha Opaque</ELEMENT>
+    <ELEMENT>-alpha Transparent</ELEMENT>
+    <ELEMENT>-alpha Extract</ELEMENT>
+    <ELEMENT>-alpha Copy</ELEMENT>
+    <ELEMENT>-alpha Shape</ELEMENT>
+    <ELEMENT>-alpha Remove</ELEMENT>
+    <ELEMENT>-alpha Background</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-antialias</ELEMENT>
+    <ELEMENT>+antialias</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-attenuate 1.0</ELEMENT>
+    <ELEMENT>-attenuate 0.5</ELEMENT>
+    <ELEMENT>-attenuate 2.0</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-auto-gamma</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-auto-level</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-auto-orient</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-auto-threshold Undefined</ELEMENT>
+    <ELEMENT>-auto-threshold Kapur</ELEMENT>
+    <ELEMENT>-auto-threshold OTSU</ELEMENT>
+    <ELEMENT>-auto-threshold Triangle</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-average</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-bench 1</ELEMENT>
+    <ELEMENT>-bench 3</ELEMENT>
+    <ELEMENT>-bench 5</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-clip</ELEMENT>
+    <ELEMENT>-clip-mask</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-contrast</ELEMENT>
+    <ELEMENT>+contrast</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-convolve 9</ELEMENT>
+    <ELEMENT>-convolve 25</ELEMENT>
+    <ELEMENT>-convolve 36</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-reverse</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-extent 4:3</ELEMENT>
+    <ELEMENT>-extent 2:1</ELEMENT>
+    <ELEMENT>-extent 5:4</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-fft</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-fill blue</ELEMENT>
+    <ELEMENT>-fill "rgb(255,255,255)"</ELEMENT>
+    <ELEMENT>-fill "rgb(0,0,0)"</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-flip</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-flop</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-gravity NorthWest</ELEMENT>
+    <ELEMENT>-gravity North</ELEMENT>
+    <ELEMENT>-gravity NorthEast</ELEMENT>
+    <ELEMENT>-gravity West</ELEMENT>
+    <ELEMENT>-gravity Center</ELEMENT>
+    <ELEMENT>-gravity East</ELEMENT>
+    <ELEMENT>-gravity SouthWest</ELEMENT>
+    <ELEMENT>-gravity South</ELEMENT>
+    <ELEMENT>-gravity SouthEast</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-grayscale Rec709Luminance</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-hald-clut</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-ift</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-set option:modulate:colorspace hsb -modulate 120,90</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-quality 0</ELEMENT>
+    <ELEMENT>-quality 1</ELEMENT>
+    <ELEMENT>-quality 2</ELEMENT>
+    <ELEMENT>-quality 3</ELEMENT>
+    <ELEMENT>-quality 4</ELEMENT>
+    <ELEMENT>-quality 5</ELEMENT>
+    <ELEMENT>-quality 6</ELEMENT>
+    <ELEMENT>-quality 7</ELEMENT>
+    <ELEMENT>-quality 8</ELEMENT>
+    <ELEMENT>-quality 9</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>-resize 10%</ELEMENT>
+    <ELEMENT>-resize 1%</ELEMENT>
+    <ELEMENT>-resize 50%</ELEMENT>
+    <ELEMENT>-resize 75%</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-trim</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-type Bilevel</ELEMENT>
+    <ELEMENT>-type Grayscale</ELEMENT>
+    <ELEMENT>-type GrayscaleAlpha</ELEMENT>
+    <ELEMENT>-type Palette</ELEMENT>
+    <ELEMENT>-type PaletteAlpha</ELEMENT>
+    <ELEMENT>-type TrueColor</ELEMENT>
+    <ELEMENT>-type TrueColorAlpha</ELEMENT>
+    <ELEMENT>-type ColorSeparation</ELEMENT>
+    <ELEMENT>-type ColorSeparationAlpha</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-weight Thin</ELEMENT>
+    <ELEMENT>-weight ExtraLight</ELEMENT>
+    <ELEMENT>-weight Light</ELEMENT>
+    <ELEMENT>-weight Normal</ELEMENT>
+    <ELEMENT>-weight Medium</ELEMENT>
+    <ELEMENT>-weight DemiBold</ELEMENT>
+    <ELEMENT>-weight Bold</ELEMENT>
+    <ELEMENT>-weight ExtraBold</ELEMENT>
+    <ELEMENT>-weight Heavy</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>/home/wulearn/Desktop/Target/magick_out/a.png</ELEMENT>
+  </ARGUMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_AREA_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>100MP</ELEMENT>
+    <ELEMENT>50MP</ELEMENT>
+    <ELEMENT>1000MP</ELEMENT>
+    <ELEMENT>10000MP</ELEMENT>
+    <ELEMENT>5000MP</ELEMENT>
+  </ENVIRONMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_DISK_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>100MB</ELEMENT>
+    <ELEMENT>500MB</ELEMENT>
+    <ELEMENT>50MB</ELEMENT>
+  </ENVIRONMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_HEIGHT_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>10MP</ELEMENT>
+    <ELEMENT>500MP</ELEMENT>
+    <ELEMENT>100MP</ELEMENT>
+    <ELEMENT>50MP</ELEMENT>
+  </ENVIRONMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_LIST_LENGTH_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>10</ELEMENT>
+    <ELEMENT>5</ELEMENT>
+    <ELEMENT>2</ELEMENT>
+  </ENVIRONMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_MAP_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>100MB</ELEMENT>
+    <ELEMENT>500MB</ELEMENT>
+    <ELEMENT>50MB</ELEMENT>
+  </ENVIRONMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_MEMORY_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>100MB</ELEMENT>
+    <ELEMENT>500MB</ELEMENT>
+    <ELEMENT>50MB</ELEMENT>
+  </ENVIRONMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_TIME_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>10</ELEMENT>
+    <ELEMENT>5</ELEMENT>
+    <ELEMENT>3</ELEMENT>
+  </ENVIRONMENT>
+  <ENVIRONMENT>
+    <NAME>MAGICK_WIDTH_LIMIT</NAME>
+    <MUST>false</MUST>
+    <ELEMENT>10MP</ELEMENT>
+    <ELEMENT>500MP</ELEMENT>
+    <ELEMENT>100MP</ELEMENT>
+    <ELEMENT>50MP</ELEMENT>
+  </ENVIRONMENT>
+</root>
+

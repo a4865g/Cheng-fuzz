@@ -1,0 +1,6 @@
+<root>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>@@</ELEMENT>
+  </ARGUMENT>
+</root>

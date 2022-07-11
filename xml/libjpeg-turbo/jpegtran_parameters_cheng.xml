@@ -1,0 +1,123 @@
+<root>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-copy none</ELEMENT>
+    <ELEMENT>-copy comments</ELEMENT>
+    <ELEMENT>-copy icc</ELEMENT>
+    <ELEMENT>-copy all</ELEMENT>
+  </ARGUMENT>	  
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-optimize</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-progressive</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-crop 1</ELEMENT>
+    <ELEMENT>-crop 10</ELEMENT>
+    <ELEMENT>-crop 100</ELEMENT>
+    <ELEMENT>-crop 100000</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>--flip horizontal</ELEMENT>
+    <ELEMENT>--flip vertical</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-grayscale</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-perfect</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-rotate 90</ELEMENT>
+    <ELEMENT>-rotate 180</ELEMENT>
+    <ELEMENT>-rotate 270</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-transpose</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-transverse</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-trim</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-wipe 10</ELEMENT>
+    <ELEMENT>-wipe 15</ELEMENT>
+    <ELEMENT>-wipe 100</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-arithmetic</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-restart 1</ELEMENT>
+    <ELEMENT>-restart 10</ELEMENT>
+    <ELEMENT>-restart 100</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-maxmemory 1</ELEMENT>
+    <ELEMENT>-maxmemory 10</ELEMENT>
+    <ELEMENT>-maxmemory 100</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-maxscans 1</ELEMENT>
+    <ELEMENT>-maxscans 10</ELEMENT>
+    <ELEMENT>-maxscans 100</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-outfile /dev/null</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-report</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-strict</ELEMENT>
+  </ARGUMENT>
+
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-verbose</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>@@</ELEMENT>
+  </ARGUMENT>
+</root>

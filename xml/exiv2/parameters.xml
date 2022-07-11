@@ -1,0 +1,44 @@
+<root>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>pr</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-p s</ELEMENT>
+    <ELEMENT>-p a</ELEMENT>
+    <ELEMENT>-p e</ELEMENT>
+    <ELEMENT>-p t</ELEMENT>
+    <ELEMENT>-p v</ELEMENT>
+    <ELEMENT>-p h</ELEMENT>
+    <ELEMENT>-p i</ELEMENT>
+    <ELEMENT>-p x</ELEMENT>
+    <ELEMENT>-p c</ELEMENT>
+    <ELEMENT>-p p</ELEMENT>
+    <ELEMENT>-p C</ELEMENT>
+    <ELEMENT>-p R</ELEMENT>
+    <ELEMENT>-p S</ELEMENT>
+    <ELEMENT>-p X</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>false</MUST>
+    <ELEMENT>-P E</ELEMENT>
+    <ELEMENT>-P I</ELEMENT>
+    <ELEMENT>-P X</ELEMENT>
+    <ELEMENT>-P x</ELEMENT>
+    <ELEMENT>-P g</ELEMENT>
+    <ELEMENT>-P k</ELEMENT>
+    <ELEMENT>-P l</ELEMENT>
+    <ELEMENT>-P n</ELEMENT>
+    <ELEMENT>-P y</ELEMENT>
+    <ELEMENT>-P c</ELEMENT>
+    <ELEMENT>-P s</ELEMENT>
+    <ELEMENT>-P v</ELEMENT>
+    <ELEMENT>-P t</ELEMENT>
+    <ELEMENT>-P h</ELEMENT>
+  </ARGUMENT>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>@@</ELEMENT>
+  </ARGUMENT>
+</root>

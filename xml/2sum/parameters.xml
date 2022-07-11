@@ -1,0 +1,11 @@
+<root>
+  <ARGUMENT>
+    <MUST>true</MUST>
+    <ELEMENT>VVuLeArn</ELEMENT>
+  </ARGUMENT>
+  <ENVIRONMENT>
+    <NAME>QUERY_STRING</NAME>
+    <MUST>true</MUST>
+    <ELEMENT>num1=2140000000&amp;num2=@@</ELEMENT>
+  </ENVIRONMENT>
+</root>
