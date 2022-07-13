@@ -9,9 +9,9 @@ from ghidra.app.decompiler import DecompInterface
 from ghidra.util.task import ConsoleTaskMonitor
 import os
 
-wufuzz_path = '/home/wulearn/Desktop/Wu-fuzz'# Wu-fuzz path
+wufuzz_path = '/home/wulearn/Desktop/Cheng-fuzz'# Cheng-fuzz path
 
-base_folder_path = '/home/wulearn/Desktop/wufuzztmp' # same as $pwd/Wu-fuzz/config/wufuzz.cfg base_folder_path
+base_folder_path = '/home/wulearn/Desktop/wufuzztmp' # same as $pwd/Cheng-fuzz/config/wufuzz.cfg base_folder_path
 
 
 program = getCurrentProgram()
@@ -36,5 +36,5 @@ while func is not None:
 	func = getFunctionAfter(func)
 f.close()
 
-xml_file_name = 'parse_out_decompiler_hedwig_cgi.xml' # same as $pwd/Wu-fuzz/config/wufuzz.cfg xml_file_name
+xml_file_name = 'parse_out_decompiler_hedwig_cgi.xml' # same as $pwd/Cheng-fuzz/config/wufuzz.cfg xml_file_name
 os.system("python3 " + wufuzz_path + "/parse_txt.py" + " -i "+ path + " -o " + base_folder_path)
