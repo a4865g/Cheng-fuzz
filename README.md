@@ -12,7 +12,7 @@ We based on the multi-argument fuzz testing method proposed by SQ-Fuzz and Yuan-
 We perform complete fuzz testing with little performance penalty on MIPS architecture by integrating the environment variable and combinations of parameters with the Qiling framework.
 ## Usage
 
-Install [libxml2](https://gitlab.gnome.org/GNOME/libxml2) / [Qiling v1.2.4](https://github.com/qilingframework/qiling/tree/1.2.4) / [Ghidra 10.1.1](https://github.com/NationalSecurityAgency/ghidra/tree/Ghidra_10.1.1_build) first.
+Install [libxml2](https://gitlab.gnome.org/GNOME/libxml2) / [Qiling v1.2.4](https://github.com/qilingframework/qiling/tree/1.2.4) / [Ghidra 10.1.1](https://github.com/NationalSecurityAgency/ghidra/tree/Ghidra_10.1.1_build) / [radare2](https://github.com/radareorg/radare2) first.
 
 Then, the same installation method as AFL++(v3.15a). (Of course, you should install some dependent packages)
 
